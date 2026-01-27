@@ -5,13 +5,13 @@ plugins {
 }
 
 android {
-    namespace = "com.example.lablearnandroid"
-    compileSdk = 36
+    namespace = "com.example.a123iii"
+    compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.lablearnandroid"
-        minSdk = 30
-        targetSdk = 36
+        applicationId = "com.example.a123iii"
+        minSdk = 24
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
 
