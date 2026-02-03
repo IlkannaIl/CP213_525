@@ -1,29 +1,98 @@
 package com.example.lablearnandroid
 
+import android.content.Intent // ต้องมีอันนี้
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext // ต้องมีอันนี้
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
-import com.example.lablearnandroid.ui.theme.LabLearnAndroidTheme
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            LabLearnAndroidTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
+            // ดึง Context มาไว้ในระดับบนของ setContent
+            val context = LocalContext.current
+
+            var str by remember { mutableIntStateOf(5) }
+            var agi by remember { mutableIntStateOf(10) }
+            var int by remember { mutableIntStateOf(15) }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(color = Color.Gray)
+                    .padding(32.dp)
+            ) {
+                // 1. แถบ HP
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(32.dp)
+                        .background(color = Color.White)
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.5f)
+                            .fillMaxHeight()
+                            .background(color = Color.Red)
                     )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 2. รูปภาพตัวละคร (กดแล้วไปหน้าใหม่)
+                Image(
+                    painter = painterResource(id = R.drawable.profile),
+                    contentDescription = "Profile",
+                    modifier = Modifier
+                        .size(150.dp)
+                        .align(Alignment.CenterHorizontally)
+                        .clickable {
+                            // เลือกชื่อ Activity ให้ตรงกับที่คุณสร้าง (ตัวอย่างคือ MainActivity2)
+                            val intent = Intent(context, MainActivity2::class.java)
+                            context.startActivity(intent)
+                        }
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 3. ปุ่มเปลี่ยนหน้า (ย้ายมาไว้ใน Column เพื่อไม่ให้แดงและจัดเลย์เอาต์ได้)
+                Button(
+                    onClick = {
+                        val intent = Intent(context, MainActivity2::class.java)
+                        context.startActivity(intent)
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(text = "ไปหน้าถัดไป")
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 4. ส่วนของ Status
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    StatusControl(label = "Str", value = str, onValueChange = { str = it })
+                    StatusControl(label = "Agi", value = agi, onValueChange = { agi = it })
+                    StatusControl(label = "Int", value = int, onValueChange = { int = it })
                 }
             }
         }
@@ -31,17 +100,21 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    LabLearnAndroidTheme {
-        Greeting("Android")
+fun StatusControl(label: String, value: Int, onValueChange: (Int) -> Unit) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        Button(onClick = { onValueChange(value + 1) }) {
+            Text(text = "+", fontSize = 24.sp)
+        }
+        Text(text = label, fontSize = 24.sp)
+        Text(text = value.toString(), fontSize = 24.sp)
+        Button(onClick = { if (value > 0) onValueChange(value - 1) }) {
+            Text(text = "-", fontSize = 24.sp)
+        }
     }
 }
+
+//@Preview(showBackground = true)
+//@Composable
+//fun previewScreen(){
+//    // ใส่เนื้อหาที่อยาก Preview ตรงนี้ เช่นเรียก StatusControl หรือ Column มาโชว์
+//}
