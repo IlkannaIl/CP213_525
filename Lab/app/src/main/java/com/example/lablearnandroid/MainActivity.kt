@@ -1,6 +1,6 @@
 package com.example.lablearnandroid
 
-import android.content.Intent // ต้องมีอันนี้
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -15,7 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext // ต้องมีอันนี้
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -26,7 +26,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            // ดึง Context มาไว้ในระดับบนของ setContent
+
             val context = LocalContext.current
 
             var str by remember { mutableIntStateOf(5) }
@@ -39,7 +39,7 @@ class MainActivity : ComponentActivity() {
                     .background(color = Color.Gray)
                     .padding(32.dp)
             ) {
-                // 1. แถบ HP
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -56,7 +56,7 @@ class MainActivity : ComponentActivity() {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 2. รูปภาพตัวละคร (กดแล้วไปหน้าใหม่)
+
                 Image(
                     painter = painterResource(id = R.drawable.profile),
                     contentDescription = "Profile",
@@ -64,7 +64,6 @@ class MainActivity : ComponentActivity() {
                         .size(150.dp)
                         .align(Alignment.CenterHorizontally)
                         .clickable {
-                            // เลือกชื่อ Activity ให้ตรงกับที่คุณสร้าง (ตัวอย่างคือ MainActivity2)
                             val intent = Intent(context, MainActivity2::class.java)
                             context.startActivity(intent)
                         }
@@ -72,7 +71,6 @@ class MainActivity : ComponentActivity() {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 3. ปุ่มเปลี่ยนหน้า (ย้ายมาไว้ใน Column เพื่อไม่ให้แดงและจัดเลย์เอาต์ได้)
                 Button(
                     onClick = {
                         val intent = Intent(context, MainActivity2::class.java)
@@ -85,7 +83,6 @@ class MainActivity : ComponentActivity() {
 
                 Spacer(modifier = Modifier.height(16.dp))
 
-                // 4. ส่วนของ Status
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween
@@ -116,5 +113,5 @@ fun StatusControl(label: String, value: Int, onValueChange: (Int) -> Unit) {
 //@Preview(showBackground = true)
 //@Composable
 //fun previewScreen(){
-//    // ใส่เนื้อหาที่อยาก Preview ตรงนี้ เช่นเรียก StatusControl หรือ Column มาโชว์
+//
 //}
