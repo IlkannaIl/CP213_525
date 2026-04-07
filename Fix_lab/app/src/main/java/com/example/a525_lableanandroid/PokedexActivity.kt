@@ -1,6 +1,7 @@
-package com.example.lablearnandroid
+package com.example.a525_lableanandroid
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -15,19 +16,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
-//import coil.compose.AsyncImage
-//import coil.request.ImageRequest
-import android.util.Log
-import androidx.compose.ui.platform.LocalContext
+import com.example.a525_lableanandroid.ui.theme._525_labLeanAndroidTheme
 
 class PokedexActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -142,9 +143,18 @@ class PokedexActivity : ComponentActivity() {
 
 }
 
+
+
+
+
+
+
+
 //
 //@Preview(showBackground = true)
 //@Composable
-//fun ListPreview() {
-//    ListScreen(PokemonViewModel())
+//fun GreetingPreview() {
+//    _525_labLeanAndroidTheme {
+//        Greeting("Android")
+//    }
 //}

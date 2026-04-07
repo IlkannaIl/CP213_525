@@ -2,6 +2,15 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Permissions for accessing external storage -->
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    
+    <!-- Permissions for sensors -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -44,9 +53,44 @@
             android:label="@string/title_activity_main3"
             android:theme="@style/Theme.LabLearnAndroid" />
         <activity
-            android:name=".MainActivity2"
+            android:name=".LifeCycleComposeActivity"
             android:exported="false"
             android:label="@string/title_activity_main2"
+            android:theme="@style/Theme.LabLearnAndroid" />
+        <activity
+            android:name=".ImagePickerActivity"
+            android:exported="false"
+            android:label="@string/title_activity_image_picker"
+            android:theme="@style/Theme.LabLearnAndroid" />
+        <activity
+            android:name=".SensorActivity"
+            android:exported="false"
+            android:label="@string/title_activity_sensor"
+            android:theme="@style/Theme.LabLearnAndroid" />
+        <activity
+            android:name=".RPGCardActivity"
+            android:exported="false"
+            android:label="@string/title_activity_rpg_card"
+            android:theme="@style/Theme.LabLearnAndroid" />
+        <activity
+            android:name=".architecture.mvc.MvcCounterActivity"
+            android:exported="false"
+            android:label="@string/title_activity_mvc_counter"
+            android:theme="@style/Theme.LabLearnAndroid" />
+        <activity
+            android:name=".architecture.mvp.MvpCounterActivity"
+            android:exported="false"
+            android:label="@string/title_activity_mvp_counter"
+            android:theme="@style/Theme.LabLearnAndroid" />
+        <activity
+            android:name=".architecture.mvvm.MvvmCounterActivity"
+            android:exported="false"
+            android:label="@string/title_activity_mvvm_counter"
+            android:theme="@style/Theme.LabLearnAndroid" />
+        <activity
+            android:name=".architecture.mvi.MviCounterActivity"
+            android:exported="false"
+            android:label="@string/title_activity_mvi_counter"
             android:theme="@style/Theme.LabLearnAndroid" />
         <activity
             android:name=".MainActivity"

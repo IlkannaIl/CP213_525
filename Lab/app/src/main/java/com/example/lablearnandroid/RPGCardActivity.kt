@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
@@ -64,7 +63,7 @@ class MainActivity : ComponentActivity() {
                         .size(150.dp)
                         .align(Alignment.CenterHorizontally)
                         .clickable {
-                            val intent = Intent(context, MainActivity2::class.java)
+                            val intent = Intent(context, LifeCycleComposeActivity::class.java)
                             context.startActivity(intent)
                         }
                 )
@@ -73,7 +72,7 @@ class MainActivity : ComponentActivity() {
 
                 Button(
                     onClick = {
-                        val intent = Intent(context, MainActivity2::class.java)
+                        val intent = Intent(context, LifeCycleComposeActivity::class.java)
                         context.startActivity(intent)
                     },
                     modifier = Modifier.fillMaxWidth()
