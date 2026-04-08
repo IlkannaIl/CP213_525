@@ -71,10 +71,10 @@ fun MenuScreen() {
             
             // Core Activities
             MenuButton(
-                text = "Main Activity",
-                description = "Basic main activity",
+                text = "RPG Card Activity",
+                description = "RPG card display with status controls",
                 onClick = { 
-                    context.startActivity(Intent(context, MainActivity::class.java))
+                    context.startActivity(Intent(context, RPGCardActivity::class.java))
                 }
             )
             
@@ -111,14 +111,7 @@ fun MenuScreen() {
                 }
             )
             
-            MenuButton(
-                text = "RPG Card",
-                description = "RPG card display activity",
-                onClick = { 
-                    context.startActivity(Intent(context, RPGCardActivity::class.java))
-                }
-            )
-            
+                        
             MenuButton(
                 text = "Pokedex",
                 description = "Pokemon API demonstration",

@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -228,7 +229,7 @@ fun SensorScreen(
                     ) {
                         SensorValueRow("Latitude:", "${locationData.latitude.format(6)}°", Color.Blue)
                         SensorValueRow("Longitude:", "${locationData.longitude.format(6)}°", Color.Blue)
-                        SensorValueRow("Accuracy:", "${locationData.accuracy.format(1)}m", Color.Orange)
+                        SensorValueRow("Accuracy:", "${locationData.accuracy.format(1)}m", Color.Red)
                     }
                     
                     Text(

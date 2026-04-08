@@ -5,6 +5,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -12,9 +13,10 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Task
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -177,11 +179,21 @@ fun TodoListScreen(
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 verticalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                Icon(
-                                    imageVector = Icons.Default.Task,
-                                    modifier = Modifier.size(64.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
+                                Box(
+                                    modifier = Modifier
+                                        .size(64.dp)
+                                        .background(
+                                            color = MaterialTheme.colorScheme.primary,
+                                            shape = androidx.compose.foundation.shape.CircleShape
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Text(
+                                        text = "!",
+                                        style = MaterialTheme.typography.headlineMedium,
+                                        color = MaterialTheme.colorScheme.onPrimary
+                                    )
+                                }
                                 Text(
                                     text = "All tasks completed!",
                                     style = MaterialTheme.typography.headlineSmall,
@@ -210,45 +222,7 @@ fun SwipeToDismissTaskItem(
     task: String,
     onDismiss: () -> Unit
 ) {
-    var isDismissed by remember { mutableStateOf(false) }
-    
-    // Scale animation for dismiss effect
-    val scale by animateFloatAsState(
-        targetValue = if (isDismissed) 0.8f else 1f,
-        animationSpec = tween(
-            durationMillis = 200,
-            easing = androidx.compose.animation.core.EaseInOutCubic
-        ),
-        label = "dismiss_scale"
-    )
-    
-    SwipeToDismissBox(
-        state = rememberDismissState(
-            confirmValueChange = { dismissValue ->
-                if (dismissValue == DismissValue.DismissedToEnd || 
-                    dismissValue == DismissValue.DismissedToStart) {
-                    isDismissed = true
-                    onDismiss()
-                    true
-                } else {
-                    false
-                }
-            },
-            positionalThreshold = 150.dp, // Distance to trigger dismiss
-            enableDismissFromStartToEnd = false, // Only allow swipe to start (left)
-            enableDismissFromEndToStart = true   // Allow swipe to end (left)
-        ),
-        backgroundContent = {
-            // Red background with trash icon that appears when swiping
-            DismissBackground()
-        },
-        modifier = Modifier
-            .animateItemPlacement() // Smooth animation when items reposition
-            .scale(scale)
-    ) {
-        // Task item content
-        TaskItemContent(task = task)
-    }
+    TaskItemContent(task = task, onDelete = onDismiss)
 }
 
 /**
@@ -277,7 +251,7 @@ fun DismissBackground() {
  * Content of a single task item
  */
 @Composable
-fun TaskItemContent(task: String) {
+fun TaskItemContent(task: String, onDelete: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth(),
@@ -291,12 +265,21 @@ fun TaskItemContent(task: String) {
             horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             // Task icon
-            Icon(
-                imageVector = Icons.Default.Task,
-                contentDescription = "Task",
-                tint = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.size(24.dp)
-            )
+            Box(
+                modifier = Modifier
+                    .size(24.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = androidx.compose.foundation.shape.CircleShape
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "T",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            }
             
             // Task text
             Text(
@@ -305,24 +288,16 @@ fun TaskItemContent(task: String) {
                 modifier = Modifier.weight(1f),
                 color = MaterialTheme.colorScheme.onSurface
             )
+            
+            // Delete button
+            IconButton(onClick = onDelete) {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = "Delete task",
+                    tint = MaterialTheme.colorScheme.error
+                )
+            }
         }
     }
 }
 
-/**
- * Dismiss state for SwipeToDismissBox
- */
-@Composable
-fun rememberDismissState(
-    confirmValueChange: (DismissValue) -> Boolean = { true },
-    positionalThreshold: androidx.compose.ui.unit.Dp = 56.dp,
-    enableDismissFromStartToEnd: Boolean = true,
-    enableDismissFromEndToStart: Boolean = true
-): androidx.compose.material3.DismissState {
-    return androidx.compose.material3.rememberDismissState(
-        confirmValueChange = confirmValueChange,
-        positionalThreshold = positionalThreshold,
-        enableDismissFromStartToEnd = enableDismissFromStartToEnd,
-        enableDismissFromEndToStart = enableDismissFromEndToStart
-    )
-}

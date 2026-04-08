@@ -49,7 +49,8 @@ fun AnimatedDonutChart(
     proportions: List<Float>,
     colors: List<Color>,
     modifier: Modifier = Modifier,
-    strokeWidth: Float = 50f
+    strokeWidth: Float = 50f,
+    surfaceColor: Color = MaterialTheme.colorScheme.surface
 ) {
     // Validate input
     require(proportions.size == colors.size) {
@@ -106,8 +107,7 @@ fun AnimatedDonutChart(
                 ),
                 style = Stroke(
                     width = strokeWidth,
-                    miter = Stroke.DefaultMiter,
-                    cap = StrokeCap.Round // Rounded ends for smoother look
+                    miter = Stroke.DefaultMiter
                 )
             )
             
@@ -116,7 +116,7 @@ fun AnimatedDonutChart(
         
         // Draw center circle to enhance donut effect
         drawCircle(
-            color = MaterialTheme.colorScheme.surface,
+            color = surfaceColor,
             radius = radius - strokeWidth / 2,
             center = center
         )

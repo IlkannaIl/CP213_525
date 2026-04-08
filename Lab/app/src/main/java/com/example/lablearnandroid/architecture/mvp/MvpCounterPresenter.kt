@@ -11,7 +11,7 @@ class MvpCounterPresenter(
     
     init {
         // Initialize the view with current count
-        view.displayCount(model.getCount())
+        view.displayCount(model.count)
     }
     
     fun onIncrementClicked() {
@@ -30,6 +30,6 @@ class MvpCounterPresenter(
     }
     
     fun getCurrentCount(): Int {
-        return model.getCount()
+        return model.count
     }
 }

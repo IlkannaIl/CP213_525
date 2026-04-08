@@ -21,6 +21,4 @@ data class MvcCounterModel(
         count = 0
         return count
     }
-    
-    fun getCount(): Int = count
 }

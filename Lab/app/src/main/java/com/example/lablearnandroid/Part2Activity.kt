@@ -231,8 +231,7 @@ fun ContactListScreen(
                     ) {
                         Card(
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .animateItemPlacement(),
+                                .fillMaxWidth(),
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.primaryContainer
                             )
@@ -290,8 +289,7 @@ fun ContactListScreen(
 fun ContactItem(contact: Contact) {
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .animateItemPlacement(),
+            .fillMaxWidth(),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(

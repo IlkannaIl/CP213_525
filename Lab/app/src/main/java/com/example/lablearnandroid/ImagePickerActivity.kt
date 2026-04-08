@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import coil.compose.AsyncImage
 import com.example.lablearnandroid.ui.theme.LabLearnAndroidTheme
+import androidx.activity.compose.rememberLauncherForActivityResult
+
 
 class ImagePickerActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,7 +43,17 @@ class ImagePickerActivity : ComponentActivity() {
 fun ImagePickerScreen() {
     val context = LocalContext.current
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+
     
+    // Gallery launcher to pick image
+    val galleryLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri: Uri? ->
+        uri?.let {
+            selectedImageUri = it
+        }
+    }
+
     // Permission launcher for storage access
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -51,15 +63,6 @@ fun ImagePickerScreen() {
             galleryLauncher.launch("image/*")
         } else {
             Toast.makeText(context, "Permission denied to access gallery", Toast.LENGTH_SHORT).show()
-        }
-    }
-    
-    // Gallery launcher to pick image
-    val galleryLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ) { uri: Uri? ->
-        uri?.let {
-            selectedImageUri = it
         }
     }
     

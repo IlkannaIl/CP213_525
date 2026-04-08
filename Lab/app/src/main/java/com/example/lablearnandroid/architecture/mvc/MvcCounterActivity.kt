@@ -46,7 +46,7 @@ class MvcCounterActivity : ComponentActivity() {
     }
     
     private fun getCurrentCount(): Int {
-        return counterModel.getCount()
+        return counterModel.count
     }
     
     @OptIn(ExperimentalMaterial3Api::class)

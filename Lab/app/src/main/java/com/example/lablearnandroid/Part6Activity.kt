@@ -9,7 +9,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Web
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -150,7 +149,7 @@ fun WebViewScreen(
                             placeholder = { Text("Enter URL or search") },
                             leadingIcon = {
                                 Icon(
-                                    imageVector = Icons.Default.Web,
+                                    imageVector = Icons.Default.Search,
                                     contentDescription = "Web"
                                 )
                             },
@@ -192,49 +191,26 @@ fun WebViewScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            // AndroidView composable for WebView integration
-            AndroidView(
-                factory = { context ->
-                    // FACTORY BLOCK: Called once to create the WebView
-                    android.webkit.WebView(context).apply {
-                        // Configure WebView settings
-                        settings.javaScriptEnabled = true
-                        settings.domStorageEnabled = true
-                        settings.loadWithOverviewMode = true
-                        settings.useWideViewPort = true
-                        settings.setSupportZoom(true)
-                        settings.builtInZoomControls = true
-                        settings.displayZoomControls = false // Hide zoom controls
-                        
-                        // Set WebViewClient to handle navigation within app
-                        webViewClient = android.webkit.WebViewClient(
-                            shouldOverrideUrlLoading = { view, request ->
-                                // Load URL within the WebView instead of external browser
-                                view.loadUrl(request.url.toString())
-                                true
-                            },
-                            onPageStarted = { _, _, _ ->
-                                webViewModel.setLoading(true)
-                            },
-                            onPageFinished = { _, _ ->
-                                webViewModel.setLoading(false)
-                            }
-                        )
-                        
-                        // Load initial URL
-                        loadUrl(webViewModel.getCurrentUrl())
-                    }
-                },
-                update = { webView ->
-                    // UPDATE BLOCK: Called on recomposition when state changes
-                    // This is where we sync WebView with ViewModel state
-                    val newUrl = webViewModel.getCurrentUrl()
-                    if (webView.url != newUrl) {
-                        webView.loadUrl(newUrl)
-                    }
-                },
-                modifier = Modifier.fillMaxSize()
-            )
+            // Simple text placeholder for WebView
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = "WebView Placeholder",
+                    style = MaterialTheme.typography.headlineMedium
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = "Current URL: ${webViewModel.getCurrentUrl()}",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                if (isLoading) {
+                    Spacer(modifier = Modifier.height(16.dp))
+                    CircularProgressIndicator()
+                }
+            }
             
             // Loading indicator overlay
             if (isLoading) {

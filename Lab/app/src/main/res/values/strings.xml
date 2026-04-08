@@ -6,4 +6,11 @@
     <string name="title_activity_menu2">MenuActivity2</string>
     <string name="title_activity_pokemon_api.kt">PokemonApi.kt</string>
     <string name="title_activity_pokedex">PokedexActivity</string>
+    <string name="title_activity_image_picker">ImagePickerActivity</string>
+    <string name="title_activity_sensor">SensorActivity</string>
+    <string name="title_activity_rpg_card">RPGCardActivity</string>
+    <string name="title_activity_mvc_counter">MvcCounterActivity</string>
+    <string name="title_activity_mvp_counter">MvpCounterActivity</string>
+    <string name="title_activity_mvvm_counter">MvvmCounterActivity</string>
+    <string name="title_activity_mvi_counter">MviCounterActivity</string>
 </resources>
