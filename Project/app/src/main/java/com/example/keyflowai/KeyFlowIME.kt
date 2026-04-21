@@ -130,14 +130,14 @@ class KeyFlowIME : InputMethodService() {
                                 else -> {}
                             }
                         }
-                        "btn_123", "btn_ABC" -> {
+                        "btn_123", "btn_thai" -> {
                             when (currentLayoutState) {
                                 LayoutState.THAI_NORMAL, LayoutState.THAI_SHIFT -> setOnClickListener { switchLayout(LayoutState.NUMBERS_BASIC) }
                                 LayoutState.NUMBERS_BASIC -> setOnClickListener { switchLayout(LayoutState.THAI_NORMAL) }
                                 LayoutState.SYMBOLS_EXTRA -> setOnClickListener { switchLayout(LayoutState.NUMBERS_BASIC) }
                             }
                         }
-                        "btn_1234" -> {
+                        "btn_symbols_number" -> {
                             when (currentLayoutState) {
                                 LayoutState.NUMBERS_BASIC -> setOnClickListener { switchLayout(LayoutState.SYMBOLS_EXTRA) }
                                 LayoutState.SYMBOLS_EXTRA -> setOnClickListener { switchLayout(LayoutState.NUMBERS_BASIC) }

@@ -18,13 +18,13 @@
         <Button android:id="@+id/btn_tilde" android:text="~" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ~"/>
         <Button android:id="@+id/btn_grave" android:text="`" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key `"/>
         <Button android:id="@+id/btn_pipe" android:text="|" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key |"/>
-        <Button android:id="@+id/btn_sqrt" android:text="√" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key √"/>
-        <Button android:id="@+id/btn_pi" android:text="π" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key π"/>
-        <Button android:id="@+id/btn_divide" android:text="÷" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ÷"/>
-        <Button android:id="@+id/btn_multiply" android:text="×" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ×"/>
-        <Button android:id="@+id/btn_degree" android:text="°" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key °"/>
+        <Button android:id="@+id/btn_sqrt" android:text="&#8730;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#8730;"/>
+        <Button android:id="@+id/btn_pi" android:text="&#960;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#960;"/>
+        <Button android:id="@+id/btn_divide" android:text="&#247;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#247;"/>
+        <Button android:id="@+id/btn_multiply" android:text="&#215;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#215;"/>
+        <Button android:id="@+id/btn_degree" android:text="&#176;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#176;"/>
         <Button android:id="@+id/btn_caret" android:text="^" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ^"/>
-        <Button android:id="@+id/btn_euro" android:text="€" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key €"/>
+        <Button android:id="@+id/btn_euro" android:text="&#8364;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#8364;"/>
     </LinearLayout>
 
     <!-- Second Row - More Special Symbols -->
@@ -38,44 +38,58 @@
         <Button android:id="@+id/btn_bracketR" android:text="]" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ]"/>
         <Button android:id="@+id/btn_braceL" android:text="{" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key {"/>
         <Button android:id="@+id/btn_braceR" android:text="}" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key }"/>
-        <Button android:id="@+id/btn_less" android:text="&lt;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &lt;"/>
-        <Button android:id="@+id/btn_greater" android:text="&gt;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &gt;"/>
-        <Button android:id="@+id/btn_bullet" android:text="•" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key •"/>
-        <Button android:id="@+id/btn_dagger" android:text="†" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key †"/>
-        <Button android:id="@+id/btn_copyright" android:text="©" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ©"/>
+        <Button android:id="@+id/btn_quoteL" android:text="&#8220;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#8220;"/>
+        <Button android:id="@+id/btn_quoteR" android:text="&#8221;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#8221;"/>
+
+        <Button android:id="@+id/btn_bullet" android:text="&#8226;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#8226;"/>
+        <Button android:id="@+id/btn_dagger" android:text="&#8224;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#8224;"/>
+        <Button android:id="@+id/btn_copyright" android:text="&#169;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#169;"/>
+        <Button android:id="@+id/btn_registered" android:text="&#174;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#174;"/>
     </LinearLayout>
 
-    <!-- Third Row - Even More Symbols -->
+    <!-- Third Row - Switch and Delete Keys -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:orientation="horizontal"
-        android:weightSum="10">
-        
-        <Button android:id="@+id/btn_registered" android:text="®" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ®"/>
-        <Button android:id="@+id/btn_trademark" android:text="™" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ™"/>
-        <Button android:id="@+id/btn_section" android:text="§" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key §"/>
-        <Button android:id="@+id/btn_paragraph" android:text="¶" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ¶"/>
-        <Button android:id="@+id/btn_ellipsis" android:text="…" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key …"/>
-        <Button android:id="@+id/bnd_emdash" android:text="—" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key —"/>
-        <Button android:id="@+id/btn_endash" android:text="–" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key –"/>
-        <Button android:id="@+id/btn_quoteL" android:text="" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key "/>
-        <Button android:id="@+id/btn_quoteR" android:text="" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key "/>
+        android:weightSum="11">
+
+        <Button android:id="@+id/btn_symbols_number" android:text="@string/label_123" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="2" android:contentDescription="Number layout"/>
+        <Button android:id="@+id/btn_trademark" android:text="&#8482;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#8482;"/>
+        <Button android:id="@+id/btn_section" android:text="&#167;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#167;"/>
+        <Button android:id="@+id/btn_paragraph" android:text="&#182;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#182;"/>
+        <Button android:id="@+id/btn_ellipsis" android:text="&#8230;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#8230;"/>
+        <Button android:id="@+id/bnd_emdash" android:text="&#8212;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#8212;"/>
+        <Button android:id="@+id/btn_endash" android:text="&#8211;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#8211;"/>
+        <Button android:id="@+id/btn_endash" android:text="&#8211;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#8211;"/>
+        <Button android:id="@+id/btn_DEL" android:text="DEL" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="2" android:contentDescription="Delete key"/>
+
     </LinearLayout>
 
-    <!-- Fourth Row -->
+    <!-- Fourth Row - Special Keys -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="48dp"
         android:orientation="horizontal"
-        android:weightSum="10">
-        
-        <Button android:id="@+id/btn_1234" android:text="1234" style="@style/KeyButton" android:layout_weight="2" android:contentDescription="More symbols"/>
-        <Button android:id="@+id/btn_ABC" android:text="กขค" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Thai layout"/>
-        <Button android:id="@+id/btn_SPACE" android:text="SPACE" style="@style/KeyButton" android:layout_weight="3" android:contentDescription="Space bar"/>
-        <Button android:id="@+id/btn_period" android:text="." style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Period key"/>
-        <Button android:id="@+id/btn_comma" android:text="," style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Comma key"/>
-        <Button android:id="@+id/btn_DEL" android:text="DEL" style="@style/KeyButton" android:layout_weight="2" android:contentDescription="Delete key"/>
+        android:weightSum="11">
+
+        <Button android:id="@+id/btn_thai" android:text="กขค" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="2" android:contentDescription="Thai layout"/>
+        <Button android:id="@+id/btn_Less_than" android:text="<" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="1" android:contentDescription="Comma"/>
+        <Button android:id="@+id/btn_SPACE" android:text="SPACE" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="5" android:contentDescription="Space bar"/>
+        <Button android:id="@+id/btn_Greater_than" android:text=">" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="1" android:contentDescription="Period"/>
+        <Button android:id="@+id/btn_ENTER" android:text="&#8629;" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="2" android:contentDescription="Enter key"/>
     </LinearLayout>
+
+    <!-- Fifth Row - Thai Switch and Delete -->
+<!--    <LinearLayout-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="48dp"-->
+<!--        android:orientation="horizontal"-->
+<!--        android:weightSum="10">-->
+<!--        -->
+<!--        <Button android:id="@+id/btn_thai" android:text="กขค" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="2" android:contentDescription="Thai layout"/>-->
+<!--        <View android:layout_width="0dp" android:layout_height="1dp" android:layout_weight="6"/>-->
+<!--        <Button android:id="@+id/btn_DEL" android:text="DEL" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="2" android:contentDescription="Delete key"/>-->
+<!--    </LinearLayout>-->
 
 </LinearLayout>
