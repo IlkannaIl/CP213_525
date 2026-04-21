@@ -3,14 +3,12 @@ package com.example.keyflowai
 import android.inputmethodservice.InputMethodService
 import android.view.View
 import android.widget.Button
-import android.widget.TextView
 import android.widget.Toast
-import android.text.TextUtils
 import kotlinx.coroutines.*
 import com.google.ai.client.generativeai.GenerativeModel
-import com.google.ai.client.generativeai.type.content
 import android.os.Handler
 import android.os.Looper
+import android.view.MotionEvent
 
 class KeyFlowIME : InputMethodService() {
 
@@ -18,14 +16,29 @@ class KeyFlowIME : InputMethodService() {
     private lateinit var refineButton: Button
     private lateinit var culturalAlert: View
     
+    // Keyboard layout states
+    enum class LayoutState {
+        THAI_NORMAL,
+        THAI_SHIFT,
+        NUMBERS_BASIC,
+        SYMBOLS_EXTRA
+    }
+    
+    private var currentLayoutState = LayoutState.THAI_NORMAL
+    
     // Coroutine scope for async operations
     private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
     private var isRefining = false
     
     // UI Handler for main thread operations
     private val mainHandler = Handler(Looper.getMainLooper())
+    
+    // Delete long press handling
+    private var deleteHandler: Handler? = null
+    private var deleteRunnable: Runnable? = null
+    private var isDeletePressed = false
 
-    //  8 5 9 Gemini AI
+    // Gemini AI
     private val generativeModel = GenerativeModel(
         modelName = "gemini-1.5-flash",
         apiKey = "AIzaSyDlq8pc9fC79_I08kwLy6hGJxkcjwJM_eM"
@@ -44,14 +57,138 @@ class KeyFlowIME : InputMethodService() {
             handleRefine()
         }
         
-        // Setup keyboard button clicks
-        setupKeyboardButtons()
+        culturalAlert?.setOnClickListener {
+            handleCulturalAlert()
+        }
+        
+        // Initialize with Thai normal layout
+        switchLayout(LayoutState.THAI_NORMAL)
 
         return rootView
     }
 
+    private fun switchLayout(newState: LayoutState) {
+        currentLayoutState = newState
+        val layoutRes = when (newState) {
+            LayoutState.THAI_NORMAL -> R.layout.custom_keyboard_layout
+            LayoutState.THAI_SHIFT -> R.layout.custom_keyboard_layout_thai_shift
+            LayoutState.NUMBERS_BASIC -> R.layout.custom_keyboard_layout_numbers
+            LayoutState.SYMBOLS_EXTRA -> R.layout.custom_keyboard_layout_symbols
+        }
+        
+        // Inflate new layout
+        keyboardView.removeAllViews()
+        layoutInflater.inflate(layoutRes, keyboardView, true)
+        
+        // Setup buttons by reading text from XML - this fixes the dots issue
+        setupKeyboardButtons()
+    }
+
+    private fun setupKeyboardButtons() {
+        // Get all button IDs based on current layout
+        val buttonIds = when (currentLayoutState) {
+            LayoutState.THAI_NORMAL, LayoutState.THAI_SHIFT -> {
+                listOf(
+                    "btn_Q", "btn_W", "btn_E", "btn_R", "btn_T", "btn_Y", "btn_U", "btn_I", "btn_O", "btn_P",
+                    "btn_A", "btn_S", "btn_D", "btn_F", "btn_G", "btn_H", "btn_J", "btn_K", "btn_L",
+                    "btn_Z", "btn_X", "btn_C", "btn_V", "btn_B", "btn_N", "btn_M", "btn_comma", "btn_period",
+                    "btn_comma2", "btn_period2", "btn_SHIFT", "btn_123", "btn_SPACE", "btn_DEL"
+                )
+            }
+            LayoutState.NUMBERS_BASIC -> {
+                listOf(
+                    "btn_1", "btn_2", "btn_3", "btn_4", "btn_5", "btn_6", "btn_7", "btn_8", "btn_9", "btn_0",
+                    "btn_at", "btn_hash", "btn_dollar", "btn_percent", "btn_amp", "btn_star", "btn_minus", "btn_plus", "btn_equal",
+                    "btn_exclaim", "btn_question", "btn_slash", "btn_backslash", "btn_pipe", "btn_colon", "btn_semicolon", "btn_parenL", "btn_parenR",
+                    "btn_1234", "btn_ABC", "btn_SPACE", "btn_comma", "btn_period", "btn_DEL"
+                )
+            }
+            LayoutState.SYMBOLS_EXTRA -> {
+                listOf(
+                    "btn_tilde", "btn_grave", "btn_pipe", "btn_sqrt", "btn_pi", "btn_divide", "btn_multiply", "btn_degree", "btn_caret", "btn_euro",
+                    "btn_bracketL", "btn_bracketR", "btn_braceL", "btn_braceR", "btn_less", "btn_greater", "btn_bullet", "btn_dagger", "btn_copyright",
+                    "btn_registered", "btn_trademark", "btn_section", "btn_paragraph", "btn_ellipsis", "bnd_emdash", "btn_endash", "btn_quoteL", "btn_quoteR",
+                    "btn_1234", "btn_ABC", "btn_SPACE", "btn_period", "btn_comma", "btn_DEL"
+                )
+            }
+        }
+        
+        buttonIds.forEach { buttonName ->
+            val resourceId = resources.getIdentifier(buttonName, "id", packageName)
+            if (resourceId != 0) {
+                val button = keyboardView.findViewById<Button>(resourceId)
+                button?.apply {
+                    // Get text from XML - this fixes the dots issue
+                    val buttonText = text.toString()
+                    
+                    when (buttonName) {
+                        // Layout navigation buttons
+                        "btn_SHIFT" -> {
+                            when (currentLayoutState) {
+                                LayoutState.THAI_NORMAL -> setOnClickListener { switchLayout(LayoutState.THAI_SHIFT) }
+                                LayoutState.THAI_SHIFT -> setOnClickListener { switchLayout(LayoutState.THAI_NORMAL) }
+                                else -> {}
+                            }
+                        }
+                        "btn_123", "btn_ABC" -> {
+                            when (currentLayoutState) {
+                                LayoutState.THAI_NORMAL, LayoutState.THAI_SHIFT -> setOnClickListener { switchLayout(LayoutState.NUMBERS_BASIC) }
+                                LayoutState.NUMBERS_BASIC -> setOnClickListener { switchLayout(LayoutState.THAI_NORMAL) }
+                                LayoutState.SYMBOLS_EXTRA -> setOnClickListener { switchLayout(LayoutState.NUMBERS_BASIC) }
+                            }
+                        }
+                        "btn_1234" -> {
+                            when (currentLayoutState) {
+                                LayoutState.NUMBERS_BASIC -> setOnClickListener { switchLayout(LayoutState.SYMBOLS_EXTRA) }
+                                LayoutState.SYMBOLS_EXTRA -> setOnClickListener { switchLayout(LayoutState.NUMBERS_BASIC) }
+                                else -> {}
+                            }
+                        }
+                        "btn_SPACE" -> setOnClickListener { handleKeyPress(" ") }
+                        "btn_DEL" -> setupDeleteButton(this)
+                        else -> setOnClickListener { handleKeyPress(buttonText) }
+                    }
+                }
+            }
+        }
+    }
+
+    private fun setupDeleteButton(button: Button) {
+        button.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    isDeletePressed = true
+                    handleDelete()
+                    startDeleteRepeat()
+                    true
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    isDeletePressed = false
+                    stopDeleteRepeat()
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+
+    private fun handleKeyPress(key: String) {
+        val ic = currentInputConnection
+        ic.commitText(key, 1)
+    }
+
+    private fun handleDelete() {
+        val ic = currentInputConnection
+        val selectedText = ic.getSelectedText(0)?.toString()
+        if (!selectedText.isNullOrEmpty()) {
+            ic.deleteSurroundingText(selectedText.length, 0)
+        } else {
+            ic.deleteSurroundingText(1, 0)
+        }
+    }
+
     private fun handleRefine() {
-        if (isRefining) return // Prevent multiple simultaneous requests
+        if (isRefining) return
         
         val ic = currentInputConnection
         val selectedText = ic.getSelectedText(0)?.toString() ?: ""
@@ -61,16 +198,13 @@ class KeyFlowIME : InputMethodService() {
             return
         }
 
-        // Start loading state
         isRefining = true
         setLoadingState(true)
 
-        // Launch coroutine for AI processing
         coroutineScope.launch {
             try {
                 val refinedText = refineTextWithAI(selectedText)
                 if (refinedText.isNotEmpty()) {
-                    // Replace selected text with refined version
                     ic.commitText(refinedText, 1)
                     showToast("Text refined successfully")
                 } else {
@@ -79,13 +213,40 @@ class KeyFlowIME : InputMethodService() {
             } catch (e: Exception) {
                 showToast("Error: ${e.message}")
             } finally {
-                // Reset loading state
                 isRefining = false
                 setLoadingState(false)
             }
         }
     }
 
+    private fun handleCulturalAlert() {
+        val ic = currentInputConnection
+        val currentText = ic.getSelectedText(0)?.toString() ?: getCurrentSentence(ic)
+        
+        if (currentText.isNotEmpty()) {
+            coroutineScope.launch {
+                try {
+                    val culturalInsight = getCulturalInsight(currentText)
+                    showToast(culturalInsight)
+                } catch (e: Exception) {
+                    showToast("Thai culture values respect and kindness")
+                }
+            }
+        } else {
+            showToast("Type or select text for cultural insight")
+        }
+    }
+    
+    private fun getCurrentSentence(ic: android.view.inputmethod.InputConnection): String {
+        val cursorPos = ic.getTextBeforeCursor(100, 0)?.toString() ?: ""
+        val afterCursor = ic.getTextAfterCursor(100, 0)?.toString() ?: ""
+        val fullContext = cursorPos + afterCursor
+        
+        val sentences = fullContext.split("[.!?]".toRegex())
+        val currentSentence = sentences.find { it.contains(cursorPos) } ?: fullContext.take(50)
+        return currentSentence.trim()
+    }
+    
     private suspend fun refineTextWithAI(text: String): String {
         return withContext(Dispatchers.IO) {
             try {
@@ -104,6 +265,25 @@ class KeyFlowIME : InputMethodService() {
             }
         }
     }
+    
+    private suspend fun getCulturalInsight(text: String): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                val prompt = """
+                    Based on the following text, provide a brief cultural insight related to Thai culture, language, or traditions.
+                    Keep it concise (under 100 characters) and educational.
+                    If the text is not Thai-related, provide a general Thai cultural fact.
+                    
+                    Text: $text
+                """.trimIndent()
+                
+                val response = generativeModel.generateContent(prompt)
+                response.text?.trim()?.take(100) ?: "Thai culture values respect and kindness."
+            } catch (e: Exception) {
+                "Thai culture values respect and kindness."
+            }
+        }
+    }
 
     private fun setLoadingState(isLoading: Boolean) {
         mainHandler.post {
@@ -114,81 +294,32 @@ class KeyFlowIME : InputMethodService() {
 
     private fun showToast(message: String) {
         mainHandler.post {
-            Toast.makeText(this@KeyFlowIME, message, Toast.LENGTH_SHORT).show()
-        }
-    }
-    
-    private fun setupKeyboardButtons() {
-        // Find all buttons in the custom keyboard layout and set click listeners
-        val keyboardButtons = listOf(
-            "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P",
-            "A", "S", "D", "F", "G", "H", "J", "K", "L",
-            "Z", "X", "C", "V", "B", "N", "M", ",", ".",
-            "123", "SPACE", "DEL"
-        )
-        
-        keyboardButtons.forEach { buttonText ->
-            val buttonId = when (buttonText) {
-                "," -> resources.getIdentifier("btn_comma", "id", packageName)
-                "." -> resources.getIdentifier("btn_period", "id", packageName)
-                else -> resources.getIdentifier("btn_$buttonText", "id", packageName)
-            }
-            if (buttonId != 0 && keyboardView != null) {
-                val button = keyboardView.findViewById<Button>(buttonId)
-                button?.apply {
-                    text = buttonText
-                    setOnClickListener {
-                        handleKeyPress(buttonText)
-                    }
-                }
-            }
-        }
-        
-        // Also set up the duplicate comma and period buttons in the last row
-        if (keyboardView != null) {
-            val comma2Id = resources.getIdentifier("btn_comma2", "id", packageName)
-            if (comma2Id != 0) {
-                val button = keyboardView.findViewById<Button>(comma2Id)
-                button?.apply {
-                    text = ","
-                    setOnClickListener { handleKeyPress(",") }
-                }
-            }
-            
-            val period2Id = resources.getIdentifier("btn_period2", "id", packageName)
-            if (period2Id != 0) {
-                val button = keyboardView.findViewById<Button>(period2Id)
-                button?.apply {
-                    text = "."
-                    setOnClickListener { handleKeyPress(".") }
-                }
-            }
-        }
-    }
-    
-    private fun handleKeyPress(key: String) {
-        val ic = currentInputConnection
-        
-        when (key) {
-            "SPACE" -> ic.commitText(" ", 1)
-            "DEL" -> {
-                val selectedText = ic.getSelectedText(0)?.toString()
-                if (!selectedText.isNullOrEmpty()) {
-                    ic.deleteSurroundingText(selectedText.length, 0)
-                } else {
-                    ic.deleteSurroundingText(1, 0)
-                }
-            }
-            "123" -> {
-                // TODO: Switch to number layout
-                showToast("Number layout not implemented yet")
-            }
-            else -> ic.commitText(key, 1)
+            Toast.makeText(this@KeyFlowIME, message, Toast.LENGTH_LONG).show()
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        coroutineScope.cancel() // Clean up coroutines
+        coroutineScope.cancel()
+        stopDeleteRepeat()
+    }
+
+    private fun startDeleteRepeat() {
+        deleteHandler = Handler(Looper.getMainLooper())
+        deleteRunnable = object : Runnable {
+            override fun run() {
+                if (isDeletePressed) {
+                    handleDelete()
+                    deleteHandler?.postDelayed(this, 50) // Repeat every 50ms
+                }
+            }
+        }
+        deleteHandler?.postDelayed(deleteRunnable!!, 500) // Start repeat after 500ms
+    }
+
+    private fun stopDeleteRepeat() {
+        deleteHandler?.removeCallbacks(deleteRunnable!!)
+        deleteHandler = null
+        deleteRunnable = null
     }
 }

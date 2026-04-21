@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#0F172A"
+    android:paddingBottom="24dp">
+
+    <!-- First Row - Numbers -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:weightSum="10">
+        
+        <Button android:id="@+id/btn_1" android:text="1" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key 1"/>
+        <Button android:id="@+id/btn_2" android:text="2" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key 2"/>
+        <Button android:id="@+id/btn_3" android:text="3" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key 3"/>
+        <Button android:id="@+id/btn_4" android:text="4" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key 4"/>
+        <Button android:id="@+id/btn_5" android:text="5" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key 5"/>
+        <Button android:id="@+id/btn_6" android:text="6" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key 6"/>
+        <Button android:id="@+id/btn_7" android:text="7" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key 7"/>
+        <Button android:id="@+id/btn_8" android:text="8" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key 8"/>
+        <Button android:id="@+id/btn_9" android:text="9" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key 9"/>
+        <Button android:id="@+id/btn_0" android:text="0" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key 0"/>
+    </LinearLayout>
+
+    <!-- Second Row - Symbols -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:weightSum="10">
+        
+        <Button android:id="@+id/btn_at" android:text="@" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key @"/>
+        <Button android:id="@+id/btn_hash" android:text="#" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key #"/>
+        <Button android:id="@+id/btn_dollar" android:text="$" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key $"/>
+        <Button android:id="@+id/btn_percent" android:text="%" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key %"/>
+        <Button android:id="@+id/btn_amp" android:text="&amp;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &amp;"/>
+        <Button android:id="@+id/btn_star" android:text="*" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key *"/>
+        <Button android:id="@+id/btn_minus" android:text="-" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key -"/>
+        <Button android:id="@+id/btn_plus" android:text="+" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key +"/>
+        <Button android:id="@+id/btn_equal" android:text="=" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ="/>
+    </LinearLayout>
+
+    <!-- Third Row - More Symbols -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:weightSum="10">
+        
+        <Button android:id="@+id/btn_exclaim" android:text="!" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key !"/>
+        <Button android:id="@+id/btn_question" android:text="?" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ?"/>
+        <Button android:id="@+id/btn_slash" android:text="/" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key /"/>
+        <Button android:id="@+id/btn_backslash" android:text="\" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key \"/>
+        <Button android:id="@+id/btn_pipe" android:text="|" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key |"/>
+        <Button android:id="@+id/btn_colon" android:text=":" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key :"/>
+        <Button android:id="@+id/btn_semicolon" android:text=";" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ;"/>
+        <Button android:id="@+id/btn_parenL" android:text="(" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ("/>
+        <Button android:id="@+id/btn_parenR" android:text=")" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key )"/>
+    </LinearLayout>
+
+    <!-- Fourth Row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:weightSum="10">
+        
+        <Button android:id="@+id/btn_1234" android:text="1234" style="@style/KeyButton" android:layout_weight="2" android:contentDescription="More symbols"/>
+        <Button android:id="@+id/btn_ABC" android:text="?123" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Back to numbers"/>
+        <Button android:id="@+id/btn_SPACE" android:text="SPACE" style="@style/KeyButton" android:layout_weight="3" android:contentDescription="Space bar"/>
+        <Button android:id="@+id/btn_comma" android:text="," style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Comma key"/>
+        <Button android:id="@+id/btn_period" android:text="." style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Period key"/>
+        <Button android:id="@+id/btn_DEL" android:text="DEL" style="@style/KeyButton" android:layout_weight="2" android:contentDescription="Delete key"/>
+    </LinearLayout>
+
+</LinearLayout>

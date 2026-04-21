@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#0F172A"
+    android:paddingBottom="24dp">
+
+    <!-- First Row - Special Symbols -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:weightSum="10">
+        
+        <Button android:id="@+id/btn_tilde" android:text="~" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ~"/>
+        <Button android:id="@+id/btn_grave" android:text="`" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key `"/>
+        <Button android:id="@+id/btn_pipe" android:text="|" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key |"/>
+        <Button android:id="@+id/btn_sqrt" android:text="√" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key √"/>
+        <Button android:id="@+id/btn_pi" android:text="π" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key π"/>
+        <Button android:id="@+id/btn_divide" android:text="÷" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ÷"/>
+        <Button android:id="@+id/btn_multiply" android:text="×" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ×"/>
+        <Button android:id="@+id/btn_degree" android:text="°" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key °"/>
+        <Button android:id="@+id/btn_caret" android:text="^" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ^"/>
+        <Button android:id="@+id/btn_euro" android:text="€" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key €"/>
+    </LinearLayout>
+
+    <!-- Second Row - More Special Symbols -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:weightSum="10">
+        
+        <Button android:id="@+id/btn_bracketL" android:text="[" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ["/>
+        <Button android:id="@+id/btn_bracketR" android:text="]" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ]"/>
+        <Button android:id="@+id/btn_braceL" android:text="{" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key {"/>
+        <Button android:id="@+id/btn_braceR" android:text="}" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key }"/>
+        <Button android:id="@+id/btn_less" android:text="&lt;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &lt;"/>
+        <Button android:id="@+id/btn_greater" android:text="&gt;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &gt;"/>
+        <Button android:id="@+id/btn_bullet" android:text="•" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key •"/>
+        <Button android:id="@+id/btn_dagger" android:text="†" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key †"/>
+        <Button android:id="@+id/btn_copyright" android:text="©" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ©"/>
+    </LinearLayout>
+
+    <!-- Third Row - Even More Symbols -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:weightSum="10">
+        
+        <Button android:id="@+id/btn_registered" android:text="®" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ®"/>
+        <Button android:id="@+id/btn_trademark" android:text="™" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ™"/>
+        <Button android:id="@+id/btn_section" android:text="§" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key §"/>
+        <Button android:id="@+id/btn_paragraph" android:text="¶" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ¶"/>
+        <Button android:id="@+id/btn_ellipsis" android:text="…" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key …"/>
+        <Button android:id="@+id/bnd_emdash" android:text="—" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key —"/>
+        <Button android:id="@+id/btn_endash" android:text="–" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key –"/>
+        <Button android:id="@+id/btn_quoteL" android:text="" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key "/>
+        <Button android:id="@+id/btn_quoteR" android:text="" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ""/>
+    </LinearLayout>
+
+    <!-- Fourth Row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:weightSum="10">
+        
+        <Button android:id="@+id/btn_1234" android:text="1234" style="@style/KeyButton" android:layout_weight="2" android:contentDescription="More symbols"/>
+        <Button android:id="@+id/btn_ABC" android:text="กขค" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Thai layout"/>
+        <Button android:id="@+id/btn_SPACE" android:text="SPACE" style="@style/KeyButton" android:layout_weight="3" android:contentDescription="Space bar"/>
+        <Button android:id="@+id/btn_period" android:text="." style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Period key"/>
+        <Button android:id="@+id/btn_comma" android:text="," style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Comma key"/>
+        <Button android:id="@+id/btn_DEL" android:text="DEL" style="@style/KeyButton" android:layout_weight="2" android:contentDescription="Delete key"/>
+    </LinearLayout>
+
+</LinearLayout>

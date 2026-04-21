@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="#0F172A"
+    android:paddingBottom="24dp">
+
+    <!-- First Row - Shifted Thai Characters -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:weightSum="10">
+        
+        <Button android:id="@+id/btn_Q" android:text="ฤ" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ฤ"/>
+        <Button android:id="@+id/btn_W" android:text="ฆ" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ฆ"/>
+        <Button android:id="@+id/btn_E" android:text="ฏ" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ฏ"/>
+        <Button android:id="@+id/btn_R" android:text="โ" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key โ"/>
+        <Button android:id="@+id/btn_T" android:text="ฌ" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ฌ"/>
+        <Button android:id="@+id/btn_Y" android:text="็" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ็"/>
+        <Button android:id="@+id/btn_U" android:text="๋" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ๋"/>
+        <Button android:id="@+id/btn_I" android:text="ษ" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ษ"/>
+        <Button android:id="@+id/btn_O" android:text="ศ" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ศ"/>
+        <Button android:id="@+id/btn_P" android:text="ซ" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ซ"/>
+    </LinearLayout>
+
+    <!-- Second Row - More Shifted Thai Characters -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:weightSum="10">
+        
+        <Button android:id="@+id/btn_A" android:text="ฉ" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ฉ"/>
+        <Button android:id="@+id/btn_S" android:text="ฮ" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ฮ"/>
+        <Button android:id="@+id/btn_D" android:text="ฺ" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ฺ"/>
+        <Button android:id="@+id/btn_F" android:text="์" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ์"/>
+        <Button android:id="@+id/btn_G" android:text="ํ" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ํ"/>
+        <Button android:id="@+id/btn_H" android:text="๎" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ๎"/>
+        <Button android:id="@+id/btn_J" android:text="๏" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ๏"/>
+        <Button android:id="@+id/btn_K" android:text="๐" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ๐"/>
+        <Button android:id="@+id/btn_L" android:text="๑" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ๑"/>
+    </LinearLayout>
+
+    <!-- Third Row - More Shifted Thai Characters -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:weightSum="10">
+        
+        <Button android:id="@+id/btn_Z" android:text="๒" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ๒"/>
+        <Button android:id="@+id/btn_X" android:text="๓" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ๓"/>
+        <Button android:id="@+id/btn_C" android:text="๔" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ๔"/>
+        <Button android:id="@+id/btn_V" android:text="๕" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ๕"/>
+        <Button android:id="@+id/btn_B" android:text="๖" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ๖"/>
+        <Button android:id="@+id/btn_N" android:text="๗" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ๗"/>
+        <Button android:id="@+id/btn_M" android:text="๘" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ๘"/>
+        <Button android:id="@+id/btn_comma" android:text="๙" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ๙"/>
+        <Button android:id="@+id/btn_period" android:text="๚" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ๚"/>
+    </LinearLayout>
+
+    <!-- Fourth Row -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:weightSum="10">
+        
+        <Button android:id="@+id/btn_SHIFT" android:text="SHIFT" style="@style/KeyButton" android:layout_weight="2" android:contentDescription="Shift key"/>
+        <Button android:id="@+id/btn_123" android:text="?123" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Number layout"/>
+        <Button android:id="@+id/btn_SPACE" android:text="SPACE" style="@style/KeyButton" android:layout_weight="3" android:contentDescription="Space bar"/>
+        <Button android:id="@+id/btn_comma2" android:text="๛" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ๛"/>
+        <Button android:id="@+id/btn_period2" android:text="๜" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ๜"/>
+        <Button android:id="@+id/btn_DEL" android:text="DEL" style="@style/KeyButton" android:layout_weight="2" android:contentDescription="Delete key"/>
+    </LinearLayout>
+
+</LinearLayout>
