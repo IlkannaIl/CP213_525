@@ -3,6 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="HardcodedText"
     android:background="#0F172A"
     android:paddingBottom="24dp">
 
@@ -69,7 +71,7 @@
         android:weightSum="10">
         
         <Button android:id="@+id/btn_SHIFT" android:text="SHIFT" style="@style/KeyButton" android:layout_weight="2" android:contentDescription="Shift key"/>
-        <Button android:id="@+id/btn_123" android:text="?123" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Number layout"/>
+        <Button android:id="@+id/btn_123" android:text="@string/label_123" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Number layout"/>
         <Button android:id="@+id/btn_SPACE" android:text="SPACE" style="@style/KeyButton" android:layout_weight="3" android:contentDescription="Space bar"/>
         <Button android:id="@+id/btn_comma2" android:text="๛" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ๛"/>
         <Button android:id="@+id/btn_period2" android:text="๜" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ๜"/>

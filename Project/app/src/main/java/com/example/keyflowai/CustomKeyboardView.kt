@@ -20,7 +20,7 @@ class CustomKeyboardView @JvmOverloads constructor(
 
     init {
         orientation = VERTICAL
-        LayoutInflater.from(context).inflate(R.layout.custom_keyboard_layout, this, true)
+        LayoutInflater.from(context).inflate(R.layout.custom_keyboard_layout_thai, this, true)
     }
 
     // You can add custom keyboard functionality here

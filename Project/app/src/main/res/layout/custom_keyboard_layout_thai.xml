@@ -3,8 +3,12 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="HardcodedText"
     android:background="#0F172A"
     android:paddingBottom="24dp">
+
+
 
     <!-- First Row -->
     <LinearLayout

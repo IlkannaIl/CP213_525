@@ -3,6 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="HardcodedText"
     android:background="#0F172A"
     android:paddingBottom="24dp">
 
@@ -58,7 +60,7 @@
         <Button android:id="@+id/bnd_emdash" android:text="—" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key —"/>
         <Button android:id="@+id/btn_endash" android:text="–" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key –"/>
         <Button android:id="@+id/btn_quoteL" android:text="" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key "/>
-        <Button android:id="@+id/btn_quoteR" android:text="" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ""/>
+        <Button android:id="@+id/btn_quoteR" android:text="" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key "/>
     </LinearLayout>
 
     <!-- Fourth Row -->

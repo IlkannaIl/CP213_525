@@ -70,7 +70,7 @@ class KeyFlowIME : InputMethodService() {
     private fun switchLayout(newState: LayoutState) {
         currentLayoutState = newState
         val layoutRes = when (newState) {
-            LayoutState.THAI_NORMAL -> R.layout.custom_keyboard_layout
+            LayoutState.THAI_NORMAL -> R.layout.custom_keyboard_layout_thai
             LayoutState.THAI_SHIFT -> R.layout.custom_keyboard_layout_thai_shift
             LayoutState.NUMBERS_BASIC -> R.layout.custom_keyboard_layout_numbers
             LayoutState.SYMBOLS_EXTRA -> R.layout.custom_keyboard_layout_symbols

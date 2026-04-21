@@ -2,4 +2,8 @@
     <string name="app_name">KeyFlow AI</string>
     <string name="title_activity_key_flow_ime">KeyFlowIME</string>
     <string name="title_activity_input_method.xml">input_method.xml</string>
+    <string name="label_123">\?123</string>
+    <string name="label_at">\@</string>
+    <string name="label_question">\?</string>
+
 </resources>
