@@ -14,7 +14,7 @@
 .cxx
 local.properties
 
-
+.kotlin/
 build/
 local.properties
 .idea/
@@ -22,3 +22,10 @@ local.properties
 captures/
 .externalNativeBuild/
 .cxx/
+bin/
+gen/
+out/
+
+**/.kotlin/
+**/metadata/
+**/kotlinTransformedMetadataLibraries/
