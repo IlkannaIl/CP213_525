@@ -38,17 +38,17 @@
         android:orientation="horizontal"
         android:weightSum="10">
         
-        <Button android:id="@+id/btn_bracketL" android:text="[" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ["/>
-        <Button android:id="@+id/btn_bracketR" android:text="]" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ]"/>
-        <Button android:id="@+id/btn_braceL" android:text="{" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key {"/>
-        <Button android:id="@+id/btn_braceR" android:text="}" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key }"/>
-        <Button android:id="@+id/btn_quoteL" android:text="&#8220;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#8220;"/>
-        <Button android:id="@+id/btn_quoteR" android:text="&#8221;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#8221;"/>
+        <Button android:id="@+id/btn_2_1" android:text="£" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key £"/>
+        <Button android:id="@+id/btn_2_2" android:text="€" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key €"/>
+        <Button android:id="@+id/btn_2_3" android:text="$" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key $"/>
+        <Button android:id="@+id/btn_2_4" android:text="¢" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ¢"/>
+        <Button android:id="@+id/btn_2_5" android:text="^" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ^"/>
+        <Button android:id="@+id/btn_2_6" android:text="°" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key °"/>
 
-        <Button android:id="@+id/btn_bullet" android:text="&#8226;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#8226;"/>
-        <Button android:id="@+id/btn_dagger" android:text="&#8224;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#8224;"/>
-        <Button android:id="@+id/btn_copyright" android:text="&#169;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#169;"/>
-        <Button android:id="@+id/btn_registered" android:text="&#174;" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key &#174;"/>
+        <Button android:id="@+id/btn_2_7" android:text="=" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key ="/>
+        <Button android:id="@+id/btn_2_8" android:text="{" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key {"/>
+        <Button android:id="@+id/btn_2_9" android:text="}" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key }"/>
+        <Button android:id="@+id/btn_2_10" android:text="\" style="@style/KeyButton" android:layout_weight="1" android:contentDescription="Key \"/>
     </LinearLayout>
 
     <!-- Third Row - Switch and Delete Keys -->
