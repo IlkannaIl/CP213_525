@@ -84,6 +84,7 @@ class KeyFlowIME : InputMethodService() {
         setupKeyboardButtons()
     }
 
+//    setup keyboard buttons
     private fun setupKeyboardButtons() {
         // Get all button IDs based on current layout
         val buttonIds = when (currentLayoutState) {
