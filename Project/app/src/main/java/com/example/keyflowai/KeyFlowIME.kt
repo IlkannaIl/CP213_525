@@ -96,87 +96,100 @@ class KeyFlowIME : InputMethodService() {
 
 //    setup keyboard buttons
     private fun setupKeyboardButtons() {
-        val ic = currentInputConnection
-
-        for (row in 1..5){
-            for (col in 1..12){
+        val view = keyboardView
+        
+        // Setup character buttons only (btn_row_col pattern)
+        setupCharacterButtons(view)
+        
+        // Setup functional buttons separately
+        setupFunctionalButtons(view)
+    }
+    
+    private fun setupCharacterButtons(view: CustomKeyboardView) {
+        for (row in 1..5) {
+            for (col in 1..12) {
                 val idName = "btn_${row}_${col}"
                 val resId = resources.getIdentifier(idName, "id", packageName)
-                if (resId != 0){
-                    keyboardView.findViewById<Button>(resId)?.let { button ->
-                        val buttonText = button.text.toString()
-                        button.setOnClickListener { handleKeyPress(buttonText) }
+                if (resId != 0) {
+                    view.findViewById<Button>(resId)?.let { button ->
+                        // Only set click listener for character buttons
+                        // Skip functional buttons that might have row_col pattern
+                        if (isCharacterButton(idName)) {
+                            button.setOnClickListener {
+                                handleKeyPress(button.text.toString())
+                            }
+                        }
                     }
                 }
             }
         }
-
-        keyboardView.findViewById<Button>(R.id.btn_DEL)?.let{ setupDeleteButton(it) }
-//  choose be like del
-        keyboardView.findViewById<Button>(R.id.btn_SPACE)?.let{ handleKeyPress(" ") }
-
-//    need to fix enter key
-        keyboardView.findViewById<Button>(R.id.btn_ENTER)?.setOnClickListener {
+    }
+    
+    private fun isCharacterButton(idName: String): Boolean {
+        // List of functional button IDs that should NOT be treated as character buttons
+        val functionalButtons = setOf(
+            "btn_SHIFT", "btn_123", "btn_SYMBOL", "btn_thai", 
+            "btn_SPACE", "btn_DEL", "btn_ENTER"
+        )
+        return !functionalButtons.contains(idName)
+    }
+    
+    private fun setupFunctionalButtons(view: CustomKeyboardView) {
+        // Delete button
+        view.findViewById<Button>(R.id.btn_DEL)?.let { setupDeleteButton(it) }
+        
+        // Space button
+        view.findViewById<Button>(R.id.btn_SPACE)?.setOnClickListener {
+            handleKeyPress(" ")
+        }
+        
+        // Enter button
+        view.findViewById<Button>(R.id.btn_ENTER)?.setOnClickListener {
             val ic = currentInputConnection
             val editorInfo = currentInputEditorInfo
 
-            if (editorInfo != null && editorInfo.imeOptions and EditorInfo.IME_MASK_ACTION != 0){
+            if (editorInfo != null && editorInfo.imeOptions and EditorInfo.IME_MASK_ACTION != 0) {
                 ic?.performEditorAction(editorInfo.imeOptions and EditorInfo.IME_MASK_ACTION)
-            }else{
+            } else {
                 sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
             }
         }
-
-//    you're not space bar, aren't you
-        keyboardView.findViewById<Button>(R.id.btn_SHIFT)?. setOnClickListener {
-            if (currentLayoutState == LayoutState.THAI_NORMAL) switchLayout(LayoutState.THAI_SHIFT)
-            else switchLayout(LayoutState.THAI_NORMAL)
+        
+        // Shift button
+        view.findViewById<Button>(R.id.btn_SHIFT)?.setOnClickListener {
+            when (currentLayoutState) {
+                LayoutState.THAI_NORMAL -> switchLayout(LayoutState.THAI_SHIFT)
+                LayoutState.THAI_SHIFT -> switchLayout(LayoutState.THAI_NORMAL)
+                else -> { /* Shift not applicable for other layouts */ }
+            }
         }
-
-//    logic problem
-        keyboardView.findViewById<Button>(R.id.btn_123)?.setOnClickListener {
-            if (currentLayoutState == LayoutState.THAI_NORMAL) switchLayout(LayoutState.NUMBERS_BASIC)
-            else if (currentLayoutState == LayoutState.THAI_SHIFT) switchLayout(LayoutState.NUMBERS_BASIC)
-            else if (currentLayoutState == LayoutState.NUMBERS_BASIC) switchLayout(LayoutState.SYMBOLS_EXTRA)
-            else switchLayout(LayoutState.NUMBERS_BASIC)
+        
+        // 123 button (switch to numbers)
+        view.findViewById<Button>(R.id.btn_123)?.setOnClickListener {
+            if (currentLayoutState == LayoutState.THAI_NORMAL || currentLayoutState == LayoutState.THAI_SHIFT) {
+                lastThaiState = currentLayoutState
+            }
+            switchLayout(LayoutState.NUMBERS_BASIC)
         }
-// not test yet
-        keyboardView.findViewById<Button>(R.id.btn_SYMBOL)?.setOnClickListener {
-            if (currentLayoutState == LayoutState.NUMBERS_BASIC) switchLayout(LayoutState.SYMBOLS_EXTRA)
-            else if (currentLayoutState == LayoutState.SYMBOLS_EXTRA) switchLayout(LayoutState.NUMBERS_BASIC)
+        
+        // Thai button (return to Thai layout)
+        view.findViewById<Button>(R.id.btn_thai)?.setOnClickListener {
+            when (currentLayoutState) {
+                LayoutState.NUMBERS_BASIC, LayoutState.SYMBOLS_EXTRA -> {
+                    switchLayout(lastThaiState)
+                }
+                else -> { /* Already in Thai layout */ }
+            }
         }
-
-//    btn_thai
-
-//
-//                        "btn_SHIFT" -> {
-//                            when (currentLayoutState) {
-//                                LayoutState.THAI_NORMAL -> setOnClickListener { switchLayout(LayoutState.THAI_SHIFT) }
-//                                LayoutState.THAI_SHIFT -> setOnClickListener { switchLayout(LayoutState.THAI_NORMAL) }
-//                                else -> {}
-//                            }
-//                        }
-//                        "btn_123", "btn_thai" -> {
-//                            when (currentLayoutState) {
-//                                LayoutState.THAI_NORMAL, LayoutState.THAI_SHIFT -> setOnClickListener { switchLayout(LayoutState.NUMBERS_BASIC) }
-//                                LayoutState.NUMBERS_BASIC -> setOnClickListener { switchLayout(LayoutState.THAI_NORMAL) }
-//                                LayoutState.SYMBOLS_EXTRA -> setOnClickListener { switchLayout(LayoutState.NUMBERS_BASIC) }
-//                            }
-//                        }
-//                        "btn_symbols_number" -> {
-//                            when (currentLayoutState) {
-//                                LayoutState.NUMBERS_BASIC -> setOnClickListener { switchLayout(LayoutState.SYMBOLS_EXTRA) }
-//                                LayoutState.SYMBOLS_EXTRA -> setOnClickListener { switchLayout(LayoutState.NUMBERS_BASIC) }
-//                                else -> {}
-//                            }
-//                        }
-//                        "btn_SPACE" -> setOnClickListener { handleKeyPress(" ") }
-//                        "btn_DEL" -> setupDeleteButton(this)
-//                        else -> setOnClickListener { handleKeyPress(buttonText) }
-//                    }
-//                }
-//            }
-//        }
+        
+        // Symbol button
+        view.findViewById<Button>(R.id.btn_SYMBOL)?.setOnClickListener {
+            when (currentLayoutState) {
+                LayoutState.NUMBERS_BASIC -> switchLayout(LayoutState.SYMBOLS_EXTRA)
+                LayoutState.SYMBOLS_EXTRA -> switchLayout(LayoutState.NUMBERS_BASIC)
+                else -> { /* Symbol not applicable for Thai layouts */ }
+            }
+        }
     }
 
     private fun setupDeleteButton(button: Button) {
