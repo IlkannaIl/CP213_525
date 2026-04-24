@@ -29,6 +29,7 @@ class KeyFlowIME : InputMethodService() {
     }
     
     private var currentLayoutState = LayoutState.THAI_NORMAL
+    private var lastThaiState = LayoutState.THAI_NORMAL
     
     // Coroutine scope for async operations
     private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
@@ -72,6 +73,11 @@ class KeyFlowIME : InputMethodService() {
     }
 
     private fun switchLayout(newState: LayoutState) {
+
+        if (newState == LayoutState.THAI_NORMAL || newState == LayoutState.THAI_SHIFT) {
+            lastThaiState = newState
+        }
+
         currentLayoutState = newState
         val layoutRes = when (newState) {
             LayoutState.THAI_NORMAL -> R.layout.custom_keyboard_layout_thai
@@ -106,9 +112,10 @@ class KeyFlowIME : InputMethodService() {
         }
 
         keyboardView.findViewById<Button>(R.id.btn_DEL)?.let{ setupDeleteButton(it) }
-
+//  choose be like del
         keyboardView.findViewById<Button>(R.id.btn_SPACE)?.let{ handleKeyPress(" ") }
 
+//    need to fix enter key
         keyboardView.findViewById<Button>(R.id.btn_ENTER)?.setOnClickListener {
             val ic = currentInputConnection
             val editorInfo = currentInputEditorInfo
@@ -120,58 +127,28 @@ class KeyFlowIME : InputMethodService() {
             }
         }
 
+//    you're not space bar, aren't you
         keyboardView.findViewById<Button>(R.id.btn_SHIFT)?. setOnClickListener {
             if (currentLayoutState == LayoutState.THAI_NORMAL) switchLayout(LayoutState.THAI_SHIFT)
-            else if (currentLayoutState == LayoutState.THAI_SHIFT) switchLayout(LayoutState.THAI_NORMAL)
+            else switchLayout(LayoutState.THAI_NORMAL)
         }
 
+//    logic problem
         keyboardView.findViewById<Button>(R.id.btn_123)?.setOnClickListener {
             if (currentLayoutState == LayoutState.THAI_NORMAL) switchLayout(LayoutState.NUMBERS_BASIC)
-            else if (currentLayoutState == LayoutState.NUMBERS_BASIC) switchLayout(LayoutState.THAI_NORMAL)
+            else if (currentLayoutState == LayoutState.THAI_SHIFT) switchLayout(LayoutState.NUMBERS_BASIC)
+            else if (currentLayoutState == LayoutState.NUMBERS_BASIC) switchLayout(LayoutState.SYMBOLS_EXTRA)
+            else switchLayout(LayoutState.NUMBERS_BASIC)
         }
-
+// not test yet
         keyboardView.findViewById<Button>(R.id.btn_SYMBOL)?.setOnClickListener {
             if (currentLayoutState == LayoutState.NUMBERS_BASIC) switchLayout(LayoutState.SYMBOLS_EXTRA)
             else if (currentLayoutState == LayoutState.SYMBOLS_EXTRA) switchLayout(LayoutState.NUMBERS_BASIC)
         }
-//        // Get all button IDs based on current layout
-//        val buttonIds = when (currentLayoutState) {
-//            LayoutState.THAI_NORMAL, LayoutState.THAI_SHIFT -> {
-//                listOf(
-//                    "btn_Q", "btn_W", "btn_E", "btn_R", "btn_T", "btn_Y", "btn_U", "btn_I", "btn_O", "btn_P",
-//                    "btn_A", "btn_S", "btn_D", "btn_F", "btn_G", "btn_H", "btn_J", "btn_K", "btn_L",
-//                    "btn_Z", "btn_X", "btn_C", "btn_V", "btn_B", "btn_N", "btn_M", "btn_comma", "btn_period",
-//                    "btn_comma2", "btn_period2", "btn_SHIFT", "btn_123", "btn_SPACE", "btn_DEL"
-//                )
-//            }
-//            LayoutState.NUMBERS_BASIC -> {
-//                listOf(
-//                    "btn_1", "btn_2", "btn_3", "btn_4", "btn_5", "btn_6", "btn_7", "btn_8", "btn_9", "btn_0",
-//                    "btn_at", "btn_hash", "btn_dollar", "btn_percent", "btn_amp", "btn_star", "btn_minus", "btn_plus", "btn_equal",
-//                    "btn_exclaim", "btn_question", "btn_slash", "btn_backslash", "btn_pipe", "btn_colon", "btn_semicolon", "btn_parenL", "btn_parenR",
-//                    "btn_1234", "btn_ABC", "btn_SPACE", "btn_comma", "btn_period", "btn_DEL"
-//                )
-//            }
-//            LayoutState.SYMBOLS_EXTRA -> {
-//                listOf(
-//                    "btn_tilde", "btn_grave", "btn_pipe", "btn_sqrt", "btn_pi", "btn_divide", "btn_multiply", "btn_degree", "btn_caret", "btn_euro",
-//                    "btn_bracketL", "btn_bracketR", "btn_braceL", "btn_braceR", "btn_less", "btn_greater", "btn_bullet", "btn_dagger", "btn_copyright",
-//                    "btn_registered", "btn_trademark", "btn_section", "btn_paragraph", "btn_ellipsis", "bnd_emdash", "btn_endash", "btn_quoteL", "btn_quoteR",
-//                    "btn_1234", "btn_ABC", "btn_SPACE", "btn_period", "btn_comma", "btn_DEL"
-//                )
-//            }
-//        }
+
+//    btn_thai
+
 //
-//        buttonIds.forEach { buttonName ->
-//            val resourceId = resources.getIdentifier(buttonName, "id", packageName)
-//            if (resourceId != 0) {
-//                val button = keyboardView.findViewById<Button>(resourceId)
-//                button?.apply {
-//                    // Get text from XML - this fixes the dots issue
-//                    val buttonText = text.toString()
-//
-//                    when (buttonName) {
-//                        // Layout navigation buttons
 //                        "btn_SHIFT" -> {
 //                            when (currentLayoutState) {
 //                                LayoutState.THAI_NORMAL -> setOnClickListener { switchLayout(LayoutState.THAI_SHIFT) }
