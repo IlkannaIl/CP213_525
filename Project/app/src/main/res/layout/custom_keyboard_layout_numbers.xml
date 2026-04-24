@@ -55,7 +55,7 @@
         android:orientation="horizontal"
         android:weightSum="11">
 
-        <Button android:id="@+id/btn_symbols_number" android:text="=&lt;" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="2" android:contentDescription="Symbol layout"/>
+        <Button android:id="@+id/btn_SYMBOL" android:text="=&lt;" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="2" android:contentDescription="Symbol layout"/>
         <Button android:id="@+id/btn_3_2" android:text="*" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="1" android:contentDescription="Key *"/>
         <Button android:id="@+id/btn_3_3" android:text="&quot;" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="1" android:contentDescription="Key Double Quote"/>
         <Button android:id="@+id/btn_3_4" android:text="'" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="1" android:contentDescription="Key '"/>

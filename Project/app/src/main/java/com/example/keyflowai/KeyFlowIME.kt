@@ -1,5 +1,6 @@
 package com.example.keyflowai
 
+import android.content.SharedPreferences
 import android.inputmethodservice.InputMethodService
 import android.view.View
 import android.widget.Button
@@ -10,6 +11,7 @@ import android.os.Handler
 import android.os.Looper
 import android.view.MotionEvent
 import android.view.KeyEvent
+import android.view.inputmethod.EditorInfo
 
 
 class KeyFlowIME : InputMethodService() {
@@ -108,7 +110,14 @@ class KeyFlowIME : InputMethodService() {
         keyboardView.findViewById<Button>(R.id.btn_SPACE)?.let{ handleKeyPress(" ") }
 
         keyboardView.findViewById<Button>(R.id.btn_ENTER)?.setOnClickListener {
-            ic?.sendKeyEvents(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_ENTER)
+            val ic = currentInputConnection
+            val editorInfo = currentInputEditorInfo
+
+            if (editorInfo != null && editorInfo.imeOptions and EditorInfo.IME_MASK_ACTION != 0){
+                ic?.performEditorAction(editorInfo.imeOptions and EditorInfo.IME_MASK_ACTION)
+            }else{
+                sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
+            }
         }
 
         keyboardView.findViewById<Button>(R.id.btn_SHIFT)?. setOnClickListener {
