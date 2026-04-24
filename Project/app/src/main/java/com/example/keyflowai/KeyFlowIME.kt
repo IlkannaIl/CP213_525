@@ -148,9 +148,23 @@ class KeyFlowIME : InputMethodService() {
             val ic = currentInputConnection
             val editorInfo = currentInputEditorInfo
 
-            if (editorInfo != null && editorInfo.imeOptions and EditorInfo.IME_MASK_ACTION != 0) {
-                ic?.performEditorAction(editorInfo.imeOptions and EditorInfo.IME_MASK_ACTION)
+            if (editorInfo != null) {
+                // Check if it's a multiline text field
+                val isMultiline = (editorInfo.inputType and android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE) != 0
+                
+                if (isMultiline) {
+                    // For multiline fields, insert a newline character
+                    ic?.commitText("\n", 1)
+                } else {
+                    // For single-line fields, perform the default editor action
+                    if (editorInfo.imeOptions and EditorInfo.IME_MASK_ACTION != 0) {
+                        ic?.performEditorAction(editorInfo.imeOptions and EditorInfo.IME_MASK_ACTION)
+                    } else {
+                        sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
+                    }
+                }
             } else {
+                // Fallback if editorInfo is null
                 sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
             }
         }
