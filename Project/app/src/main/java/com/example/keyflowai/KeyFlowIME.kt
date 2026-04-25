@@ -7,6 +7,10 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.EditText
 import android.widget.Toast
+import android.widget.PopupWindow
+import android.widget.LinearLayout
+import android.view.Gravity
+import android.view.LayoutInflater
 import kotlinx.coroutines.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -45,6 +49,17 @@ class KeyFlowIME : InputMethodService() {
     private var originalLyricQuote: String = ""
     private var isThaiTranslation = false
     private var currentMusicUrl: String = ""
+    
+    // Internal input toggle state
+    private var originalInternalText: String = ""
+    private var isInternalTextTranslated = false
+    
+    // Lyric runner toggle state
+    private var originalLyricRunnerText: String = ""
+    private var isLyricRunnerTranslated = false
+    
+    // Music popup window
+    private var musicPopupWindow: PopupWindow? = null
     
     // Keyboard layout states
     enum class LayoutState {
@@ -305,29 +320,42 @@ class KeyFlowIME : InputMethodService() {
     }
     
     private fun refineInternalInput() {
-        val textToRefine = internalInputField.text.toString()
-        if (textToRefine.isEmpty()) {
+        val currentText = internalInputField.text.toString()
+        if (currentText.isEmpty()) {
             showToast("Type some text to refine")
             return
         }
         
+        // Check if we should toggle back to original Thai text
+        if (isInternalTextTranslated && originalInternalText.isNotEmpty()) {
+            // Toggle back to original Thai
+            internalInputField.setText(originalInternalText)
+            internalInputField.setSelection(originalInternalText.length)
+            isInternalTextTranslated = false
+            showToast("Reverted to original Thai text")
+            return
+        }
+        
+        // Save original Thai text and translate to English
+        originalInternalText = currentText
         isRefining = true
         setLoadingState(true)
         
         serviceScope.launch {
             try {
-                val refinedText = withContext(Dispatchers.IO) {
-                    val prompt = "Improve this Thai text or translate to formal English: $textToRefine"
+                val translatedText = withContext(Dispatchers.IO) {
+                    val prompt = "Translate this Thai text to professional English. Output ONLY the polished English translation, no explanations."
                     fetchGeminiResponse(prompt)
                 }
                 
                 withContext(Dispatchers.Main) {
-                    if (refinedText.isNotEmpty()) {
-                        internalInputField.setText(refinedText)
-                        internalInputField.setSelection(refinedText.length) // Move cursor to end
-                        showToast("Text refined successfully")
+                    if (translatedText.isNotEmpty()) {
+                        internalInputField.setText(translatedText)
+                        internalInputField.setSelection(translatedText.length)
+                        isInternalTextTranslated = true
+                        showToast("Text translated successfully")
                     } else {
-                        showToast("Failed to refine text")
+                        showToast("Failed to translate text")
                     }
                     isRefining = false
                     setLoadingState(false)
@@ -409,11 +437,6 @@ class KeyFlowIME : InputMethodService() {
             isRefining = true
             setLoadingState(true)
             
-            // Show "Connecting..." immediately
-            lyricRunnerText.text = "Connecting..."
-            lyricRunnerText.visibility = View.VISIBLE
-            lyricRunnerText.isSelected = true
-            
             serviceScope.launch {
                 try {
                     val response = withContext(Dispatchers.IO) {
@@ -433,13 +456,16 @@ class KeyFlowIME : InputMethodService() {
                             isThaiTranslation = false
                             currentMusicUrl = "https://www.youtube.com/results?search_query=${searchQuery.replace(" ", "+")}"
                             
+                            // Show popup window with song info
+                            showMusicPopup(lyricPart, currentMusicUrl)
+                            
+                            // Also update lyric runner text
                             lyricRunnerText.text = lyricPart
                             lyricRunnerText.isSelected = true // Start marquee
                             
-                            showToast("Lyric found! Click to insert")
+                            showToast("Song found! Click lyric to translate")
                         } else {
-                            lyricRunnerText.text = "No response from AI"
-                            lyricRunnerText.isSelected = true
+                            showToast("No response from AI")
                         }
                         isRefining = false
                         setLoadingState(false)
@@ -447,8 +473,7 @@ class KeyFlowIME : InputMethodService() {
                 } catch (e: Exception) {
                     Log.e("GEMINI_ERROR", "Error: ", e)
                     withContext(Dispatchers.Main) {
-                        lyricRunnerText.text = "Error: ${e.message}"
-                        lyricRunnerText.isSelected = true
+                        showToast("Error: ${e.message}")
                         isRefining = false
                         setLoadingState(false)
                     }
@@ -459,12 +484,102 @@ class KeyFlowIME : InputMethodService() {
         }
     }
     
+    private fun showMusicPopup(lyric: String, musicUrl: String) {
+        // Dismiss any existing popup
+        musicPopupWindow?.dismiss()
+        
+        // Create popup view
+        val popupView = layoutInflater.inflate(R.layout.music_popup_layout, null)
+        musicPopupWindow = PopupWindow(
+            popupView,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            LinearLayout.LayoutParams.WRAP_CONTENT,
+            true // focusable
+        ).apply {
+            // Set background with rounded corners
+            setBackgroundDrawable(resources.getDrawable(android.R.drawable.dialog_frame, null))
+            elevation = 8f
+        }
+        
+        // Setup popup content
+        val lyricTextView = popupView.findViewById<TextView>(R.id.popup_lyric_text)
+        val listenButton = popupView.findViewById<Button>(R.id.popup_listen_button)
+        val closeButton = popupView.findViewById<Button>(R.id.popup_close_button)
+        
+        lyricTextView?.text = lyric
+        
+        listenButton?.setOnClickListener {
+            try {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(musicUrl))
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(intent)
+                musicPopupWindow?.dismiss()
+            } catch (e: Exception) {
+                showToast("Could not open music app")
+            }
+        }
+        
+        closeButton?.setOnClickListener {
+            musicPopupWindow?.dismiss()
+        }
+        
+        // Show popup above the keyboard
+        val location = IntArray(2)
+        musicModeButton.getLocationOnScreen(location)
+        val x = location[0] + musicModeButton.width / 2 - 200 // Center horizontally
+        val y = location[1] - 200 // Show above the button
+        
+        musicPopupWindow?.showAtLocation(musicModeButton, Gravity.NO_GRAVITY, x, y)
+        
+        // Auto-dismiss after 5 seconds
+        mainHandler.postDelayed({
+            musicPopupWindow?.dismiss()
+        }, 5000)
+    }
+    
     private fun handleLyricClick() {
-        if (currentLyricQuote.isNotEmpty()) {
-            val ic = currentInputConnection
-            ic.commitText(currentLyricQuote, 1)
+        val currentLyricText = lyricRunnerText.text.toString()
+        
+        // Check if we should toggle back to original lyric
+        if (isLyricRunnerTranslated && originalLyricRunnerText.isNotEmpty()) {
+            lyricRunnerText.text = originalLyricRunnerText
+            isLyricRunnerTranslated = false
+            showToast("Reverted to original lyric")
+            return
+        }
+        
+        // If we have a current lyric quote, translate it
+        if (currentLyricQuote.isNotEmpty() && currentLyricText != "♪ Welcome to The Lyricist Keyboard ♪") {
+            originalLyricRunnerText = currentLyricText
+            isRefining = true
             
-            // Open YouTube search using the currentMusicUrl
+            serviceScope.launch {
+                try {
+                    val thaiTranslation = withContext(Dispatchers.IO) {
+                        val prompt = "Translate this English lyric to Thai with poetic expression. Output ONLY the Thai translation, no explanations."
+                        fetchGeminiResponse(prompt)
+                    }
+                    
+                    withContext(Dispatchers.Main) {
+                        if (thaiTranslation.isNotEmpty()) {
+                            lyricRunnerText.text = thaiTranslation
+                            isLyricRunnerTranslated = true
+                            showToast("Lyric translated to Thai")
+                        } else {
+                            showToast("Failed to translate lyric")
+                        }
+                        isRefining = false
+                    }
+                } catch (e: Exception) {
+                    Log.e("GEMINI_ERROR", "Error translating lyric: ", e)
+                    withContext(Dispatchers.Main) {
+                        showToast("Translation error: ${e.message}")
+                        isRefining = false
+                    }
+                }
+            }
+        } else if (currentMusicUrl.isNotEmpty()) {
+            // Original behavior: open YouTube search
             try {
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(currentMusicUrl))
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
@@ -695,6 +810,7 @@ class KeyFlowIME : InputMethodService() {
         super.onDestroy()
         serviceScope.cancel()
         stopDeleteRepeat()
+        musicPopupWindow?.dismiss()
     }
 
     private fun startDeleteRepeat() {
