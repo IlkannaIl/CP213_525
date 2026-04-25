@@ -90,7 +90,7 @@ class KeyFlowIME : InputMethodService() {
         keyboardView.removeAllViews()
         layoutInflater.inflate(layoutRes, keyboardView, true)
         
-        // Setup buttons by reading text from XML - this fixes the dots issue
+        // Setup buttons
         setupKeyboardButtons()
     }
 
@@ -98,10 +98,10 @@ class KeyFlowIME : InputMethodService() {
     private fun setupKeyboardButtons() {
         val view = keyboardView
         
-        // Setup character buttons only (btn_row_col pattern)
+        // Setup buttons (btn_row_col)
         setupCharacterButtons(view)
         
-        // Setup functional buttons separately
+        // Setup functional buttons
         setupFunctionalButtons(view)
     }
     
@@ -112,8 +112,7 @@ class KeyFlowIME : InputMethodService() {
                 val resId = resources.getIdentifier(idName, "id", packageName)
                 if (resId != 0) {
                     view.findViewById<Button>(resId)?.let { button ->
-                        // Only set click listener for character buttons
-                        // Skip functional buttons that might have row_col pattern
+
                         if (isCharacterButton(idName)) {
                             button.setOnClickListener {
                                 handleKeyPress(button.text.toString())
@@ -126,7 +125,7 @@ class KeyFlowIME : InputMethodService() {
     }
     
     private fun isCharacterButton(idName: String): Boolean {
-        // List of functional button IDs that should NOT be treated as character buttons
+
         val functionalButtons = setOf(
             "btn_SHIFT", "btn_123", "btn_SYMBOL", "btn_thai", 
             "btn_SPACE", "btn_DEL", "btn_ENTER"
@@ -206,6 +205,7 @@ class KeyFlowIME : InputMethodService() {
         }
     }
 
+//    setup delete button
     private fun setupDeleteButton(button: Button) {
         button.setOnTouchListener { _, event ->
             when (event.action) {
