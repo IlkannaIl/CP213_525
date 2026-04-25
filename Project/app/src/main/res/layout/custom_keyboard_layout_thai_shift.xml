@@ -24,9 +24,9 @@
         <Button android:id="@+id/btn_1_7" android:text="฿" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="1" android:contentDescription="Key ฿"/>
         <Button android:id="@+id/btn_1_8" android:text="๕" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="1" android:contentDescription="Key ๕"/>
         <Button android:id="@+id/btn_1_9" android:text="๖" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="1" android:contentDescription="Key ๖"/>
-        <Button android:id="@+id/btn__1_10" android:text="๗" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="1" android:contentDescription="Key ๗"/>
-        <Button android:id="@+id/btn__1_11" android:text="๘" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="1" android:contentDescription="Key ๘"/>
-        <Button android:id="@+id/btn__1_12" android:text="๙" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="1" android:contentDescription="Key ๙"/>
+        <Button android:id="@+id/btn_1_10" android:text="๗" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="1" android:contentDescription="Key ๗"/>
+        <Button android:id="@+id/btn_1_11" android:text="๘" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="1" android:contentDescription="Key ๘"/>
+        <Button android:id="@+id/btn_1_12" android:text="๙" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="1" android:contentDescription="Key ๙"/>
     </LinearLayout>
 
     <!-- Second Row - 12 Shifted Thai Characters -->

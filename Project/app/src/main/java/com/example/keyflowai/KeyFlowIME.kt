@@ -11,6 +11,8 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import com.google.ai.client.generativeai.GenerativeModel
+import com.google.ai.client.generativeai.type.SafetySetting
+import com.google.ai.client.generativeai.type.HarmCategory
 import android.os.Handler
 import android.os.Looper
 import android.view.MotionEvent
@@ -21,13 +23,8 @@ import android.net.Uri
 import androidx.appcompat.app.AlertDialog
 import android.text.Editable
 import android.text.TextWatcher
-import java.net.HttpURLConnection
-import java.net.URL
-import java.io.OutputStreamWriter
-import java.io.BufferedReader
-import java.io.InputStreamReader
-import org.json.JSONObject
-import org.json.JSONArray
+import android.util.Log
+import com.google.ai.client.generativeai.type.BlockThreshold
 
 
 class KeyFlowIME : InputMethodService() {
@@ -57,7 +54,7 @@ class KeyFlowIME : InputMethodService() {
     private var lastThaiState = LayoutState.THAI_NORMAL
     
     // Coroutine scope for async operations
-    private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var isRefining = false
     
     // UI Handler for main thread operations
@@ -69,12 +66,26 @@ class KeyFlowIME : InputMethodService() {
     private var isDeletePressed = false
 
     // Gemini AI
-    private val generativeModel = GenerativeModel(
-        modelName = "gemini-1.5-flash",
-        apiKey = "AIzaSyCKFiJqsfJqLxMZfJUG16e_yf_EFfq06K4"
-    )
+    private lateinit var generativeModel: GenerativeModel
 
     override fun onCreateInputView(): View {
+        // Initialize GenerativeModel with proper generationConfig and safetySettings
+        generativeModel = GenerativeModel(
+            modelName = "gemini-1.5-flash-latest",
+            apiKey = "AIzaSyBQm7RxFUtj2FMAQ_XGLtzaZIrAjf0R6xU",
+            generationConfig = com.google.ai.client.generativeai.type.generationConfig {
+                temperature = 0.7f
+                topP = 0.8f
+                maxOutputTokens = 200
+            },
+            safetySettings = listOf(
+                SafetySetting(HarmCategory.HARASSMENT, BlockThreshold.NONE),
+                SafetySetting(HarmCategory.HATE_SPEECH, BlockThreshold.NONE),
+                SafetySetting(HarmCategory.SEXUALLY_EXPLICIT, BlockThreshold.NONE),
+                SafetySetting(HarmCategory.DANGEROUS_CONTENT, BlockThreshold.NONE)
+            )
+        )
+        
         val rootView = layoutInflater.inflate(R.layout.input_method, null)
         
         // Find the actual keyboard view within the inflated layout
@@ -318,10 +329,12 @@ class KeyFlowIME : InputMethodService() {
         isRefining = true
         setLoadingState(true)
         
-        CoroutineScope(Dispatchers.IO).launch {
+        serviceScope.launch {
             try {
-                val prompt = "Improve this Thai text or translate to formal English: $textToRefine"
-                val refinedText = fetchGeminiResponse(prompt)
+                val refinedText = withContext(Dispatchers.IO) {
+                    val prompt = "Improve this Thai text or translate to formal English: $textToRefine"
+                    fetchGeminiResponse(prompt)
+                }
                 
                 withContext(Dispatchers.Main) {
                     if (refinedText.isNotEmpty()) {
@@ -335,6 +348,7 @@ class KeyFlowIME : InputMethodService() {
                     setLoadingState(false)
                 }
             } catch (e: Exception) {
+                Log.e("GEMINI_ERROR", "Error: ", e)
                 withContext(Dispatchers.Main) {
                     showToast("Error: ${e.message}")
                     isRefining = false
@@ -350,7 +364,7 @@ class KeyFlowIME : InputMethodService() {
         isRefining = true
         setLoadingState(true)
         
-        coroutineScope.launch {
+        serviceScope.launch {
             try {
                 if (isThaiTranslation) {
                     // Show original English lyric
@@ -383,7 +397,7 @@ class KeyFlowIME : InputMethodService() {
         isRefining = true
         setLoadingState(true)
 
-        coroutineScope.launch {
+        serviceScope.launch {
             try {
                 val refinedText = refineTextWithAI(selectedText)
                 if (refinedText.isNotEmpty()) {
@@ -410,10 +424,17 @@ class KeyFlowIME : InputMethodService() {
             isRefining = true
             setLoadingState(true)
             
-            CoroutineScope(Dispatchers.IO).launch {
+            // Show "Connecting..." immediately
+            lyricRunnerText.text = "Connecting..."
+            lyricRunnerText.visibility = View.VISIBLE
+            lyricRunnerText.isSelected = true
+            
+            serviceScope.launch {
                 try {
-                    val prompt = "Give me one short English song lyric quote and the YouTube search query for it based on this emotion: $currentText. Format: Quote - Artist | SearchQuery"
-                    val response = fetchGeminiResponse(prompt)
+                    val response = withContext(Dispatchers.IO) {
+                        val prompt = "Give me one short English song lyric quote and the YouTube search query for it based on this emotion: $currentText. Format: Quote - Artist | SearchQuery"
+                        fetchGeminiResponse(prompt)
+                    }
                     
                     withContext(Dispatchers.Main) {
                         if (response.isNotEmpty()) {
@@ -428,22 +449,20 @@ class KeyFlowIME : InputMethodService() {
                             currentMusicUrl = "https://www.youtube.com/results?search_query=${searchQuery.replace(" ", "+")}"
                             
                             lyricRunnerText.text = lyricPart
-                            lyricRunnerText.visibility = View.VISIBLE
                             lyricRunnerText.isSelected = true // Start marquee
                             
                             showToast("Lyric found! Click to insert")
                         } else {
-                            lyricRunnerText.text = "Connection Error"
-                            lyricRunnerText.visibility = View.VISIBLE
+                            lyricRunnerText.text = "No response from AI"
                             lyricRunnerText.isSelected = true
                         }
                         isRefining = false
                         setLoadingState(false)
                     }
                 } catch (e: Exception) {
+                    Log.e("GEMINI_ERROR", "Error: ", e)
                     withContext(Dispatchers.Main) {
-                        lyricRunnerText.text = "Connection Error"
-                        lyricRunnerText.visibility = View.VISIBLE
+                        lyricRunnerText.text = "Error: ${e.message}"
                         lyricRunnerText.isSelected = true
                         isRefining = false
                         setLoadingState(false)
@@ -557,67 +576,23 @@ class KeyFlowIME : InputMethodService() {
         }
     }
     
-    // Placeholder AI functions - Replace with actual API calls
+    // SDK-based AI function using official GenerativeModel
     private suspend fun fetchGeminiResponse(prompt: String): String {
         return withContext(Dispatchers.IO) {
             try {
-                val url = URL("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyDlq8pc9fC79_I08kwLy6hGJxkcjwJM_eM")
-                val connection = url.openConnection() as HttpURLConnection
+                Log.d("GEMINI_API", "Making SDK call with prompt: $prompt")
+                val response = generativeModel.generateContent(prompt)
+                val result = response.text ?: ""
                 
-                connection.requestMethod = "POST"
-                connection.setRequestProperty("Content-Type", "application/json")
-                connection.doOutput = true
-                
-                val jsonPayload = JSONObject().apply {
-                    put("contents", JSONArray().apply {
-                        put(JSONObject().apply {
-                            put("parts", JSONArray().apply {
-                                put(JSONObject().apply {
-                                    put("text", prompt)
-                                })
-                            })
-                        })
-                    })
+                // Log response on main thread for clear visibility
+                withContext(Dispatchers.Main) {
+                    Log.d("GEMINI_API", "SDK response: $result")
                 }
                 
-                val outputStream = connection.outputStream
-                val writer = OutputStreamWriter(outputStream, "UTF-8")
-                writer.write(jsonPayload.toString())
-                writer.flush()
-                writer.close()
-                outputStream.close()
-                
-                val responseCode = connection.responseCode
-                if (responseCode == HttpURLConnection.HTTP_OK) {
-                    val inputStream = connection.inputStream
-                    val reader = BufferedReader(InputStreamReader(inputStream, "UTF-8"))
-                    val response = StringBuilder()
-                    var line: String?
-                    while (reader.readLine().also { line = it } != null) {
-                        response.append(line)
-                    }
-                    reader.close()
-                    inputStream.close()
-                    
-                    val jsonResponse = JSONObject(response.toString())
-                    val candidates = jsonResponse.getJSONArray("candidates")
-                    if (candidates.length() > 0) {
-                        val candidate = candidates.getJSONObject(0)
-                        val content = candidate.getJSONObject("content")
-                        val parts = content.getJSONArray("parts")
-                        if (parts.length() > 0) {
-                            val part = parts.getJSONObject(0)
-                            return@withContext part.getString("text").trim()
-                        }
-                    }
-                    return@withContext ""
-                } else {
-                    throw Exception("HTTP Error: $responseCode")
-                }
+                return@withContext result
             } catch (e: Exception) {
-                throw Exception("API call failed: ${e.message}")
-            } finally {
-                // Connection will be automatically closed
+                Log.e("GEMINI_ERROR", "Error in SDK call: ", e)
+                throw Exception("SDK call failed: ${e.message}")
             }
         }
     }
@@ -659,7 +634,7 @@ class KeyFlowIME : InputMethodService() {
 
     override fun onDestroy() {
         super.onDestroy()
-        coroutineScope.cancel()
+        serviceScope.cancel()
         stopDeleteRepeat()
     }
 
