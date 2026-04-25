@@ -72,8 +72,9 @@ class KeyFlowIME : InputMethodService() {
     override fun onCreateInputView(): View {
         // Initialize GenerativeModel with proper generationConfig and safetySettings
         generativeModel = GenerativeModel(
-            modelName = "models/gemini-pro", // Try "gemini-pro" if 404 persists
+            modelName = "gemini-1.5-flash", // Try "gemini-pro" if 404 persists
             apiKey = "AIzaSyBQm7RxFUtj2FMAQ_XGLtzaZIrAjf0R6xU",
+            requestOptions = RequestOptions(apiVersion = "v1"),
 
             generationConfig = com.google.ai.client.generativeai.type.generationConfig {
                 temperature = 0.7f
