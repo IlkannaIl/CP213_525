@@ -10,10 +10,14 @@ import android.widget.Toast
 import kotlinx.coroutines.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import com.google.ai.client.generativeai.GenerativeModel
-import com.google.ai.client.generativeai.type.SafetySetting
-import com.google.ai.client.generativeai.type.HarmCategory
-import com.google.ai.client.generativeai.type.RequestOptions
+import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
+import org.json.JSONException
+import org.json.JSONArray
+import java.io.IOException
+import java.util.concurrent.TimeUnit
 import android.os.Handler
 import android.os.Looper
 import android.view.MotionEvent
@@ -25,7 +29,6 @@ import androidx.appcompat.app.AlertDialog
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
-import com.google.ai.client.generativeai.type.BlockThreshold
 
 
 class KeyFlowIME : InputMethodService() {
@@ -66,28 +69,7 @@ class KeyFlowIME : InputMethodService() {
     private var deleteRunnable: Runnable? = null
     private var isDeletePressed = false
 
-    // Gemini AI
-    private lateinit var generativeModel: GenerativeModel
-
     override fun onCreateInputView(): View {
-        // Initialize GenerativeModel with proper generationConfig and safetySettings
-        generativeModel = GenerativeModel(
-            modelName = "gemini-1.5-flash", // Try "gemini-pro" if 404 persists
-            apiKey = "AIzaSyBQm7RxFUtj2FMAQ_XGLtzaZIrAjf0R6xU",
-            requestOptions = RequestOptions(apiVersion = "v1"),
-
-            generationConfig = com.google.ai.client.generativeai.type.generationConfig {
-                temperature = 0.7f
-                topP = 0.8f
-                maxOutputTokens = 200
-            },
-            safetySettings = listOf(
-                SafetySetting(HarmCategory.HARASSMENT, BlockThreshold.NONE),
-                SafetySetting(HarmCategory.HATE_SPEECH, BlockThreshold.NONE),
-                SafetySetting(HarmCategory.SEXUALLY_EXPLICIT, BlockThreshold.NONE),
-                SafetySetting(HarmCategory.DANGEROUS_CONTENT, BlockThreshold.NONE)
-            )
-        )
         
         val rootView = layoutInflater.inflate(R.layout.input_method, null)
         
@@ -533,8 +515,7 @@ class KeyFlowIME : InputMethodService() {
                     Original text: $text
                 """.trimIndent()
                 
-                val response = generativeModel.generateContent(prompt)
-                response.text?.trim() ?: ""
+                return@withContext fetchGeminiResponse(prompt)
             } catch (e: Exception) {
                 throw Exception("AI processing failed: ${e.message}")
             }
@@ -552,8 +533,7 @@ class KeyFlowIME : InputMethodService() {
                     Text/Emotion: $userEmotion
                 """.trimIndent()
                 
-                val response = generativeModel.generateContent(prompt)
-                response.text?.trim() ?: ""
+                return@withContext fetchGeminiResponse(prompt)
             } catch (e: Exception) {
                 throw Exception("Failed to fetch lyric: ${e.message}")
             }
@@ -571,34 +551,107 @@ class KeyFlowIME : InputMethodService() {
                     English lyric: $englishLyric
                 """.trimIndent()
                 
-                val response = generativeModel.generateContent(prompt)
-                response.text?.trim() ?: englishLyric
+                val result = fetchGeminiResponse(prompt)
+                return@withContext if (result.isNotEmpty()) result else englishLyric
             } catch (e: Exception) {
                 throw Exception("Translation failed: ${e.message}")
             }
         }
     }
     
-    // Simplified SDK-based AI function using official GenerativeModel
+    // Manual OkHttp implementation for Gemini API
     private suspend fun fetchGeminiResponse(prompt: String): String {
         return withContext(Dispatchers.IO) {
             try {
-                Log.d("GEMINI_API", "Making SDK call with prompt: $prompt")
-                val response = generativeModel.generateContent(prompt)
-                val result = response.text ?: ""
+                val apiKey = "AIzaSyBQm7RxFUtj2FMAQ_XGLtzaZIrAjf0R6xU"
+                val url = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=$apiKey"
                 
-                // Update UI on main thread
-                withContext(Dispatchers.Main) {
-                    Log.d("GEMINI_API", "SDK response: $result")
+                // Create JSON body
+                val jsonBody = JSONObject().apply {
+                    put("contents", JSONArray().apply {
+                        put(JSONObject().apply {
+                            put("parts", JSONArray().apply {
+                                put(JSONObject().apply {
+                                    put("text", prompt)
+                                })
+                            })
+                        })
+                    })
                 }
                 
-                return@withContext result
+                // Create OkHttp client
+                val client = OkHttpClient.Builder()
+                    .connectTimeout(30, TimeUnit.SECONDS)
+                    .readTimeout(30, TimeUnit.SECONDS)
+                    .writeTimeout(30, TimeUnit.SECONDS)
+                    .build()
+                
+                // Create request
+                val mediaType = "application/json; charset=utf-8".toMediaType()
+                val requestBody = jsonBody.toString().toRequestBody(mediaType)
+                
+                val request = Request.Builder()
+                    .url(url)
+                    .post(requestBody)
+                    .addHeader("Content-Type", "application/json")
+                    .build()
+                
+                Log.d("GEMINI_API", "Making manual OkHttp call to: $url")
+                
+                // Execute request
+                client.newCall(request).execute().use { response ->
+                    val responseBody = response.body?.string() ?: ""
+                    
+                    if (!response.isSuccessful) {
+                        Log.e("GEMINI_ERROR", "HTTP Error: ${response.code} - $responseBody")
+                        
+                        // Try to parse error message from JSON
+                        val errorMessage = try {
+                            val errorJson = JSONObject(responseBody)
+                            errorJson.getJSONObject("error")
+                                .getString("message")
+                        } catch (e: JSONException) {
+                            "HTTP ${response.code}: ${response.message}"
+                        }
+                        
+                        throw Exception("API Error ($response.code): $errorMessage")
+                    }
+                    
+                    // Parse successful response
+                    try {
+                        val responseJson = JSONObject(responseBody)
+                        val candidates = responseJson.getJSONArray("candidates")
+                        if (candidates.length() > 0) {
+                            val firstCandidate = candidates.getJSONObject(0)
+                            val content = firstCandidate.getJSONObject("content")
+                            val parts = content.getJSONArray("parts")
+                            if (parts.length() > 0) {
+                                val firstPart = parts.getJSONObject(0)
+                                val result = firstPart.getString("text").trim()
+                                
+                                // Update UI on main thread
+                                withContext(Dispatchers.Main) {
+                                    Log.d("GEMINI_API", "Manual OkHttp response: $result")
+                                }
+                                
+                                return@withContext result
+                            }
+                        }
+                        throw Exception("No content in response")
+                    } catch (e: JSONException) {
+                        Log.e("GEMINI_ERROR", "JSON parsing error: ", e)
+                        throw Exception("Failed to parse response: ${e.message}")
+                    }
+                }
+            } catch (e: IOException) {
+                Log.e("GEMINI_ERROR", "Network error: ", e)
+                throw Exception("Network error: ${e.message}")
             } catch (e: Exception) {
-                Log.e("GEMINI_ERROR", "Error in SDK call: ", e)
+                Log.e("GEMINI_ERROR", "Error in manual API call: ", e)
                 withContext(Dispatchers.Main) {
                     Log.e("GEMINI_ERROR", "Main thread error: ${e.message}")
                 }
-                throw Exception("SDK call failed: ${e.message}")
+                throw Exception("API call failed: ${e.message}")
             }
         }
     }
