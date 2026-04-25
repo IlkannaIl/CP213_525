@@ -9,6 +9,7 @@ import android.widget.EditText
 import android.widget.Toast
 import kotlinx.coroutines.*
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import com.google.ai.client.generativeai.GenerativeModel
 import android.os.Handler
 import android.os.Looper
@@ -70,7 +71,7 @@ class KeyFlowIME : InputMethodService() {
     // Gemini AI
     private val generativeModel = GenerativeModel(
         modelName = "gemini-1.5-flash",
-        apiKey = "AIzaSyDlq8pc9fC79_I08kwLy6hGJxkcjwJM_eM"
+        apiKey = "AIzaSyCKFiJqsfJqLxMZfJUG16e_yf_EFfq06K4"
     )
 
     override fun onCreateInputView(): View {
@@ -317,10 +318,12 @@ class KeyFlowIME : InputMethodService() {
         isRefining = true
         setLoadingState(true)
         
-        coroutineScope.launch {
+        CoroutineScope(Dispatchers.IO).launch {
             try {
-                val refinedText = callGeminiRefine(textToRefine)
-                mainHandler.post {
+                val prompt = "Improve this Thai text or translate to formal English: $textToRefine"
+                val refinedText = fetchGeminiResponse(prompt)
+                
+                withContext(Dispatchers.Main) {
                     if (refinedText.isNotEmpty()) {
                         internalInputField.setText(refinedText)
                         internalInputField.setSelection(refinedText.length) // Move cursor to end
@@ -332,7 +335,7 @@ class KeyFlowIME : InputMethodService() {
                     setLoadingState(false)
                 }
             } catch (e: Exception) {
-                mainHandler.post {
+                withContext(Dispatchers.Main) {
                     showToast("Error: ${e.message}")
                     isRefining = false
                     setLoadingState(false)
@@ -407,34 +410,41 @@ class KeyFlowIME : InputMethodService() {
             isRefining = true
             setLoadingState(true)
             
-            coroutineScope.launch {
+            CoroutineScope(Dispatchers.IO).launch {
                 try {
-                    val lyricQuote = callGeminiLyric(currentText)
-                    mainHandler.post {
-                        if (lyricQuote.isNotEmpty()) {
-                            // Parse the quote and URL (format: "Quote - Artist")
-                            val parts = lyricQuote.split(" - ")
-                            val quote = if (parts.isNotEmpty()) parts[0] else lyricQuote
-                            val artist = if (parts.size > 1) parts[1] else "Unknown Artist"
+                    val prompt = "Give me one short English song lyric quote and the YouTube search query for it based on this emotion: $currentText. Format: Quote - Artist | SearchQuery"
+                    val response = fetchGeminiResponse(prompt)
+                    
+                    withContext(Dispatchers.Main) {
+                        if (response.isNotEmpty()) {
+                            // Parse the response (format: "Quote - Artist | SearchQuery")
+                            val parts = response.split(" | ")
+                            val lyricPart = if (parts.isNotEmpty()) parts[0] else response
+                            val searchQuery = if (parts.size > 1) parts[1] else lyricPart
                             
-                            currentLyricQuote = lyricQuote
-                            originalLyricQuote = lyricQuote
+                            currentLyricQuote = lyricPart
+                            originalLyricQuote = lyricPart
                             isThaiTranslation = false
-                            currentMusicUrl = "https://www.youtube.com/results?search_query=${artist.replace(" ", "+")}+${quote.replace(" ", "+")}"
+                            currentMusicUrl = "https://www.youtube.com/results?search_query=${searchQuery.replace(" ", "+")}"
                             
-                            lyricRunnerText.text = lyricQuote
+                            lyricRunnerText.text = lyricPart
+                            lyricRunnerText.visibility = View.VISIBLE
                             lyricRunnerText.isSelected = true // Start marquee
                             
-                            showToast("Lyric found! Click to insert, Refine to translate")
+                            showToast("Lyric found! Click to insert")
                         } else {
-                            showToast("No lyric found for this text")
+                            lyricRunnerText.text = "Connection Error"
+                            lyricRunnerText.visibility = View.VISIBLE
+                            lyricRunnerText.isSelected = true
                         }
                         isRefining = false
                         setLoadingState(false)
                     }
                 } catch (e: Exception) {
-                    mainHandler.post {
-                        showToast("Error fetching lyric: ${e.message}")
+                    withContext(Dispatchers.Main) {
+                        lyricRunnerText.text = "Connection Error"
+                        lyricRunnerText.visibility = View.VISIBLE
+                        lyricRunnerText.isSelected = true
                         isRefining = false
                         setLoadingState(false)
                     }
@@ -450,10 +460,9 @@ class KeyFlowIME : InputMethodService() {
             val ic = currentInputConnection
             ic.commitText(currentLyricQuote, 1)
             
-            // Extract song name from current lyric and open YouTube search
-            val songName = currentLyricQuote
+            // Open YouTube search using the currentMusicUrl
             try {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/results?search_query=" + songName))
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(currentMusicUrl))
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 startActivity(intent)
             } catch (e: Exception) {
