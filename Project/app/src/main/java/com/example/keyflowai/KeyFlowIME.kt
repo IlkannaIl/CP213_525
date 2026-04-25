@@ -13,6 +13,7 @@ import kotlinx.coroutines.withContext
 import com.google.ai.client.generativeai.GenerativeModel
 import com.google.ai.client.generativeai.type.SafetySetting
 import com.google.ai.client.generativeai.type.HarmCategory
+import com.google.ai.client.generativeai.type.RequestOptions
 import android.os.Handler
 import android.os.Looper
 import android.view.MotionEvent
@@ -71,8 +72,9 @@ class KeyFlowIME : InputMethodService() {
     override fun onCreateInputView(): View {
         // Initialize GenerativeModel with proper generationConfig and safetySettings
         generativeModel = GenerativeModel(
-            modelName = "gemini-1.5-flash-latest",
+            modelName = "models/gemini-pro", // Try "gemini-pro" if 404 persists
             apiKey = "AIzaSyBQm7RxFUtj2FMAQ_XGLtzaZIrAjf0R6xU",
+
             generationConfig = com.google.ai.client.generativeai.type.generationConfig {
                 temperature = 0.7f
                 topP = 0.8f
@@ -576,7 +578,7 @@ class KeyFlowIME : InputMethodService() {
         }
     }
     
-    // SDK-based AI function using official GenerativeModel
+    // Simplified SDK-based AI function using official GenerativeModel
     private suspend fun fetchGeminiResponse(prompt: String): String {
         return withContext(Dispatchers.IO) {
             try {
@@ -584,7 +586,7 @@ class KeyFlowIME : InputMethodService() {
                 val response = generativeModel.generateContent(prompt)
                 val result = response.text ?: ""
                 
-                // Log response on main thread for clear visibility
+                // Update UI on main thread
                 withContext(Dispatchers.Main) {
                     Log.d("GEMINI_API", "SDK response: $result")
                 }
@@ -592,6 +594,9 @@ class KeyFlowIME : InputMethodService() {
                 return@withContext result
             } catch (e: Exception) {
                 Log.e("GEMINI_ERROR", "Error in SDK call: ", e)
+                withContext(Dispatchers.Main) {
+                    Log.e("GEMINI_ERROR", "Main thread error: ${e.message}")
+                }
                 throw Exception("SDK call failed: ${e.message}")
             }
         }
