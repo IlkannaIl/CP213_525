@@ -12,7 +12,7 @@
         android:paddingHorizontal="16dp">
 
         <LinearLayout
-            android:id="@+id/cultural_alert_badge"
+            android:id="@+id/btn_music_mode"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_centerVertical="true"
@@ -23,11 +23,11 @@
                 android:layout_height="16dp"
                 android:src="@drawable/ic_alert"
                 android:layout_gravity="center_vertical"
-                android:contentDescription="Cultural alert icon" />
+                android:contentDescription="Music mode icon" />
             <TextView 
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Cultural Alert"
+                android:text="Music Mode"
                 android:textColor="#FFFFFF"
                 android:textSize="12sp"
                 android:layout_gravity="center_vertical"
@@ -59,7 +59,27 @@
                 android:layout_height="match_parent"
                 android:orientation="horizontal"
                 android:gravity="center_vertical"
-                android:paddingHorizontal="8dp" />
+                android:paddingHorizontal="8dp">
+            
+            <!-- Lyric Runner Text for The Lyricist Keyboard -->
+            <TextView
+                android:id="@+id/lyric_runner_text"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="♪ Welcome to The Lyricist Keyboard ♪"
+                android:textColor="#E2E8F0"
+                android:textSize="14sp"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="12dp"
+                android:ellipsize="marquee"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:singleLine="true"
+                android:focusable="true"
+                android:focusableInTouchMode="true"
+                android:marqueeRepeatLimit="marquee_forever"
+                android:selectAllOnFocus="false" />
+                
+        </LinearLayout>
     </HorizontalScrollView>
 
     <!-- 3. Keys Area -->

@@ -4,6 +4,7 @@ import android.content.SharedPreferences
 import android.inputmethodservice.InputMethodService
 import android.view.View
 import android.widget.Button
+import android.widget.TextView
 import android.widget.Toast
 import kotlinx.coroutines.*
 import com.google.ai.client.generativeai.GenerativeModel
@@ -12,13 +13,23 @@ import android.os.Looper
 import android.view.MotionEvent
 import android.view.KeyEvent
 import android.view.inputmethod.EditorInfo
+import android.content.Intent
+import android.net.Uri
+import androidx.appcompat.app.AlertDialog
 
 
 class KeyFlowIME : InputMethodService() {
 
     private lateinit var keyboardView: CustomKeyboardView
     private lateinit var refineButton: Button
-    private lateinit var culturalAlert: View
+    private lateinit var musicModeButton: View
+    private lateinit var lyricRunnerText: TextView
+    
+    // Lyricist Keyboard state
+    private var currentLyricQuote: String = ""
+    private var originalLyricQuote: String = ""
+    private var isThaiTranslation = false
+    private var currentMusicUrl: String = ""
     
     // Keyboard layout states
     enum class LayoutState {
@@ -56,14 +67,19 @@ class KeyFlowIME : InputMethodService() {
         keyboardView = rootView.findViewById(R.id.keyboard_view)
 
         refineButton = rootView.findViewById(R.id.btn_refine)
-        culturalAlert = rootView.findViewById(R.id.cultural_alert_badge)
+        musicModeButton = rootView.findViewById(R.id.btn_music_mode)
+        lyricRunnerText = rootView.findViewById(R.id.lyric_runner_text)
 
         refineButton?.setOnClickListener {
             handleRefine()
         }
         
-        culturalAlert?.setOnClickListener {
-            handleCulturalAlert()
+        musicModeButton?.setOnClickListener {
+            handleMusicMode()
+        }
+        
+        lyricRunnerText?.setOnClickListener {
+            handleLyricClick()
         }
         
         // Initialize with Thai normal layout
@@ -243,6 +259,44 @@ class KeyFlowIME : InputMethodService() {
     private fun handleRefine() {
         if (isRefining) return
         
+        // Dual-mode logic: Check if we have a lyric quote to translate
+        if (currentLyricQuote.isNotEmpty()) {
+            // Toggle between English and Thai translation
+            toggleLyricTranslation()
+        } else {
+            // Original text refinement logic
+            refineInputText()
+        }
+    }
+    
+    private fun toggleLyricTranslation() {
+        if (isRefining) return
+        
+        isRefining = true
+        setLoadingState(true)
+        
+        coroutineScope.launch {
+            try {
+                if (isThaiTranslation) {
+                    // Show original English lyric
+                    lyricRunnerText.text = originalLyricQuote
+                    isThaiTranslation = false
+                } else {
+                    // Show Thai translation
+                    val thaiTranslation = translateLyricToThai(originalLyricQuote)
+                    lyricRunnerText.text = thaiTranslation
+                    isThaiTranslation = true
+                }
+            } catch (e: Exception) {
+                showToast("Translation error: ${e.message}")
+            } finally {
+                isRefining = false
+                setLoadingState(false)
+            }
+        }
+    }
+    
+    private fun refineInputText() {
         val ic = currentInputConnection
         val selectedText = ic.getSelectedText(0)?.toString() ?: ""
 
@@ -272,21 +326,75 @@ class KeyFlowIME : InputMethodService() {
         }
     }
 
-    private fun handleCulturalAlert() {
+    private fun handleMusicMode() {
+        if (isRefining) return
+        
         val ic = currentInputConnection
-        val currentText = ic.getSelectedText(0)?.toString() ?: getCurrentSentence(ic)
+        val currentText = ic.getTextBeforeCursor(100, 0)?.toString() ?: ""
         
         if (currentText.isNotEmpty()) {
+            isRefining = true
+            setLoadingState(true)
+            
             coroutineScope.launch {
                 try {
-                    val culturalInsight = getCulturalInsight(currentText)
-                    showToast(culturalInsight)
+                    val lyricQuote = fetchLyricQuoteFromGemini(currentText)
+                    if (lyricQuote.isNotEmpty()) {
+                        // Parse the quote and URL (format: "Quote - Artist")
+                        val parts = lyricQuote.split(" - ")
+                        val quote = if (parts.isNotEmpty()) parts[0] else lyricQuote
+                        val artist = if (parts.size > 1) parts[1] else "Unknown Artist"
+                        
+                        currentLyricQuote = lyricQuote
+                        originalLyricQuote = lyricQuote
+                        isThaiTranslation = false
+                        currentMusicUrl = "https://www.youtube.com/results?search_query=${artist.replace(" ", "+")}+${quote.replace(" ", "+")}"
+                        
+                        lyricRunnerText.text = lyricQuote
+                        lyricRunnerText.isSelected = true // Start marquee
+                        
+                        showToast("Lyric found! Click to insert, Refine to translate")
+                    } else {
+                        showToast("No lyric found for this text")
+                    }
                 } catch (e: Exception) {
-                    showToast("Thai culture values respect and kindness")
+                    showToast("Error fetching lyric: ${e.message}")
+                } finally {
+                    isRefining = false
+                    setLoadingState(false)
                 }
             }
         } else {
-            showToast("Type or select text for cultural insight")
+            showToast("Type some text to get a matching lyric")
+        }
+    }
+    
+    private fun handleLyricClick() {
+        if (currentLyricQuote.isNotEmpty()) {
+            val ic = currentInputConnection
+            ic.commitText(currentLyricQuote, 1)
+            
+            // Show music link option
+            showMusicLinkDialog()
+        }
+    }
+    
+    private fun showMusicLinkDialog() {
+        if (currentMusicUrl.isNotEmpty()) {
+            AlertDialog.Builder(this)
+                .setTitle("Listen to Music")
+                .setMessage("Would you like to listen to this song?")
+                .setPositiveButton("Listen") { _, _ ->
+                    try {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(currentMusicUrl))
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        startActivity(intent)
+                    } catch (e: Exception) {
+                        showToast("Could not open music app")
+                    }
+                }
+                .setNegativeButton("Cancel", null)
+                .show()
         }
     }
     
@@ -319,21 +427,40 @@ class KeyFlowIME : InputMethodService() {
         }
     }
     
-    private suspend fun getCulturalInsight(text: String): String {
+    private suspend fun fetchLyricQuoteFromGemini(userEmotion: String): String {
         return withContext(Dispatchers.IO) {
             try {
                 val prompt = """
-                    Based on the following text, provide a brief cultural insight related to Thai culture, language, or traditions.
-                    Keep it concise (under 100 characters) and educational.
-                    If the text is not Thai-related, provide a general Thai cultural fact.
+                    Based on the following text/emotion, return an English song lyric quote that matches the feeling.
+                    Format: "Quote - Artist"
+                    Keep it concise and meaningful.
                     
-                    Text: $text
+                    Text/Emotion: $userEmotion
                 """.trimIndent()
                 
                 val response = generativeModel.generateContent(prompt)
-                response.text?.trim()?.take(100) ?: "Thai culture values respect and kindness."
+                response.text?.trim() ?: ""
             } catch (e: Exception) {
-                "Thai culture values respect and kindness."
+                throw Exception("Failed to fetch lyric: ${e.message}")
+            }
+        }
+    }
+    
+    private suspend fun translateLyricToThai(englishLyric: String): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                val prompt = """
+                    Translate the following English lyric to Thai with poetic and artistic expression.
+                    Keep the meaning and emotion intact.
+                    Return only the Thai translation without any explanation.
+                    
+                    English lyric: $englishLyric
+                """.trimIndent()
+                
+                val response = generativeModel.generateContent(prompt)
+                response.text?.trim() ?: englishLyric
+            } catch (e: Exception) {
+                throw Exception("Translation failed: ${e.message}")
             }
         }
     }
