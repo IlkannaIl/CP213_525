@@ -21,7 +21,7 @@
             android:layout_weight="1"
             android:textColor="#FFFFFF"
             android:hint="ร่างข้อความที่นี่..."
-            android:hintTextColor="#888888"
+            android:textColorHint="#888888"
             android:background="@android:color/transparent"
             android:textSize="14sp"
             android:inputType="textMultiLine"
