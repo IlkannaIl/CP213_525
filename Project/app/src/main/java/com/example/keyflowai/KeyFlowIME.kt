@@ -5,8 +5,10 @@ import android.inputmethodservice.InputMethodService
 import android.view.View
 import android.widget.Button
 import android.widget.TextView
+import android.widget.EditText
 import android.widget.Toast
 import kotlinx.coroutines.*
+import kotlinx.coroutines.delay
 import com.google.ai.client.generativeai.GenerativeModel
 import android.os.Handler
 import android.os.Looper
@@ -16,6 +18,8 @@ import android.view.inputmethod.EditorInfo
 import android.content.Intent
 import android.net.Uri
 import androidx.appcompat.app.AlertDialog
+import android.text.Editable
+import android.text.TextWatcher
 
 
 class KeyFlowIME : InputMethodService() {
@@ -24,6 +28,8 @@ class KeyFlowIME : InputMethodService() {
     private lateinit var refineButton: Button
     private lateinit var musicModeButton: View
     private lateinit var lyricRunnerText: TextView
+    private lateinit var internalInputField: EditText
+    private lateinit var sendToAppButton: Button
     
     // Lyricist Keyboard state
     private var currentLyricQuote: String = ""
@@ -69,6 +75,8 @@ class KeyFlowIME : InputMethodService() {
         refineButton = rootView.findViewById(R.id.btn_refine)
         musicModeButton = rootView.findViewById(R.id.btn_music_mode)
         lyricRunnerText = rootView.findViewById(R.id.lyric_runner_text)
+        internalInputField = rootView.findViewById(R.id.internal_input_field)
+        sendToAppButton = rootView.findViewById(R.id.btn_send_to_app)
 
         refineButton?.setOnClickListener {
             handleRefine()
@@ -81,6 +89,13 @@ class KeyFlowIME : InputMethodService() {
         lyricRunnerText?.setOnClickListener {
             handleLyricClick()
         }
+        
+        sendToAppButton?.setOnClickListener {
+            handleSendToApp()
+        }
+        
+        // Setup TextWatcher for send button visibility
+        setupTextWatcher()
         
         // Initialize with Thai normal layout
         switchLayout(LayoutState.THAI_NORMAL)
@@ -131,7 +146,7 @@ class KeyFlowIME : InputMethodService() {
 
                         if (isCharacterButton(idName)) {
                             button.setOnClickListener {
-                                handleKeyPress(button.text.toString())
+                                appendToInternalInput(button.text.toString())
                             }
                         }
                     }
@@ -155,33 +170,12 @@ class KeyFlowIME : InputMethodService() {
         
         // Space button
         view.findViewById<Button>(R.id.btn_SPACE)?.setOnClickListener {
-            handleKeyPress(" ")
+            appendToInternalInput(" ")
         }
         
         // Enter button
         view.findViewById<Button>(R.id.btn_ENTER)?.setOnClickListener {
-            val ic = currentInputConnection
-            val editorInfo = currentInputEditorInfo
-
-            if (editorInfo != null) {
-                // Check if it's a multiline text field
-                val isMultiline = (editorInfo.inputType and android.text.InputType.TYPE_TEXT_FLAG_MULTI_LINE) != 0
-                
-                if (isMultiline) {
-                    // For multiline fields, insert a newline character
-                    ic?.commitText("\n", 1)
-                } else {
-                    // For single-line fields, perform the default editor action
-                    if (editorInfo.imeOptions and EditorInfo.IME_MASK_ACTION != 0) {
-                        ic?.performEditorAction(editorInfo.imeOptions and EditorInfo.IME_MASK_ACTION)
-                    } else {
-                        sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
-                    }
-                }
-            } else {
-                // Fallback if editorInfo is null
-                sendDownUpKeyEvents(KeyEvent.KEYCODE_ENTER)
-            }
+            appendToInternalInput("\n")
         }
         
         // Shift button
@@ -245,14 +239,46 @@ class KeyFlowIME : InputMethodService() {
         val ic = currentInputConnection
         ic.commitText(key, 1)
     }
+    
+    private fun appendToInternalInput(text: String) {
+        val currentText = internalInputField.text.toString()
+        val cursorPosition = internalInputField.selectionStart
+        val newText = currentText.substring(0, cursorPosition) + text + currentText.substring(cursorPosition)
+        internalInputField.setText(newText)
+        internalInputField.setSelection(cursorPosition + text.length)
+    }
+    
+    private fun handleSendToApp() {
+        val textToSend = internalInputField.text.toString()
+        if (textToSend.isNotEmpty()) {
+            val ic = currentInputConnection
+            ic?.commitText(textToSend, 1)
+            internalInputField.setText("")
+        }
+    }
+    
+    private fun setupTextWatcher() {
+        internalInputField.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            
+            override fun afterTextChanged(s: Editable?) {
+                // Show send button when field is not empty
+                sendToAppButton.visibility = if (s?.isNotEmpty() == true) View.VISIBLE else View.GONE
+            }
+        })
+    }
 
     private fun handleDelete() {
-        val ic = currentInputConnection
-        val selectedText = ic.getSelectedText(0)?.toString()
-        if (!selectedText.isNullOrEmpty()) {
-            ic.deleteSurroundingText(selectedText.length, 0)
-        } else {
-            ic.deleteSurroundingText(1, 0)
+        val currentText = internalInputField.text.toString()
+        if (currentText.isNotEmpty()) {
+            val cursorPosition = internalInputField.selectionStart
+            if (cursorPosition > 0) {
+                val newText = currentText.substring(0, cursorPosition - 1) + currentText.substring(cursorPosition)
+                internalInputField.setText(newText)
+                internalInputField.setSelection(cursorPosition - 1)
+            }
         }
     }
 
@@ -264,8 +290,37 @@ class KeyFlowIME : InputMethodService() {
             // Toggle between English and Thai translation
             toggleLyricTranslation()
         } else {
-            // Original text refinement logic
-            refineInputText()
+            // Refine text from internal input field
+            refineInternalInput()
+        }
+    }
+    
+    private fun refineInternalInput() {
+        val textToRefine = internalInputField.text.toString()
+        if (textToRefine.isEmpty()) {
+            showToast("Type some text to refine")
+            return
+        }
+        
+        isRefining = true
+        setLoadingState(true)
+        
+        coroutineScope.launch {
+            try {
+                val refinedText = callGeminiRefine(textToRefine)
+                if (refinedText.isNotEmpty()) {
+                    internalInputField.setText(refinedText)
+                    internalInputField.setSelection(refinedText.length) // Move cursor to end
+                    showToast("Text refined successfully")
+                } else {
+                    showToast("Failed to refine text")
+                }
+            } catch (e: Exception) {
+                showToast("Error: ${e.message}")
+            } finally {
+                isRefining = false
+                setLoadingState(false)
+            }
         }
     }
     
@@ -329,8 +384,7 @@ class KeyFlowIME : InputMethodService() {
     private fun handleMusicMode() {
         if (isRefining) return
         
-        val ic = currentInputConnection
-        val currentText = ic.getTextBeforeCursor(100, 0)?.toString() ?: ""
+        val currentText = internalInputField.text.toString()
         
         if (currentText.isNotEmpty()) {
             isRefining = true
@@ -338,7 +392,7 @@ class KeyFlowIME : InputMethodService() {
             
             coroutineScope.launch {
                 try {
-                    val lyricQuote = fetchLyricQuoteFromGemini(currentText)
+                    val lyricQuote = callGeminiLyric(currentText)
                     if (lyricQuote.isNotEmpty()) {
                         // Parse the quote and URL (format: "Quote - Artist")
                         val parts = lyricQuote.split(" - ")
@@ -461,6 +515,51 @@ class KeyFlowIME : InputMethodService() {
                 response.text?.trim() ?: englishLyric
             } catch (e: Exception) {
                 throw Exception("Translation failed: ${e.message}")
+            }
+        }
+    }
+    
+    // Placeholder AI functions - Replace with actual API calls
+    private suspend fun callGeminiRefine(text: String): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                // Simulate API delay
+                delay(1000)
+                
+                val prompt = """
+                    Please refine and improve the following text. Make it more professional, clear, and grammatically correct. 
+                    If the text is in Thai, improve the Thai. If in English, improve the English.
+                    Only return the refined text without any explanation.
+                    
+                    Original text: $text
+                """.trimIndent()
+                
+                val response = generativeModel.generateContent(prompt)
+                response.text?.trim() ?: text
+            } catch (e: Exception) {
+                throw Exception("AI processing failed: ${e.message}")
+            }
+        }
+    }
+    
+    private suspend fun callGeminiLyric(text: String): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                // Simulate API delay
+                delay(1500)
+                
+                val prompt = """
+                    Based on the following text/emotion, return an English song lyric quote that matches the feeling.
+                    Format: "Quote - Artist"
+                    Keep it concise and meaningful.
+                    
+                    Text/Emotion: $text
+                """.trimIndent()
+                
+                val response = generativeModel.generateContent(prompt)
+                response.text?.trim() ?: ""
+            } catch (e: Exception) {
+                throw Exception("Failed to fetch lyric: ${e.message}")
             }
         }
     }

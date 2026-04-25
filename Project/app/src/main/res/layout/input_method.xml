@@ -5,6 +5,44 @@
     android:orientation="vertical"
     android:background="#0F172A"> <!-- Dark Mode Background -->
 
+    <!-- Smart Draft Bar -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp"
+        android:background="#1E293B">
+        
+        <EditText
+            android:id="@+id/internal_input_field"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:textColor="#FFFFFF"
+            android:hint="ร่างข้อความที่นี่..."
+            android:hintTextColor="#888888"
+            android:background="@android:color/transparent"
+            android:textSize="14sp"
+            android:inputType="textMultiLine"
+            android:maxLines="2"
+            android:scrollHorizontally="false" />
+            
+        <Button
+            android:id="@+id/btn_send_to_app"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:text="SEND"
+            android:textColor="#FFFFFF"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:backgroundTint="#4CAF50"
+            android:paddingHorizontal="12dp"
+            android:layout_marginStart="8dp"
+            android:visibility="gone" />
+            
+    </LinearLayout>
+
     <!-- 1. Top Bar (Toolbar) -->
     <RelativeLayout
         android:layout_width="match_parent"
