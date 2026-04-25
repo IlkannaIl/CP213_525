@@ -563,8 +563,8 @@ class KeyFlowIME : InputMethodService() {
     private suspend fun fetchGeminiResponse(prompt: String): String {
         return withContext(Dispatchers.IO) {
             try {
-                val apiKey = "AIzaSyBQm7RxFUtj2FMAQ_XGLtzaZIrAjf0R6xU"
-                val url = "https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=$apiKey"
+                val apiKey = "AIzaSyAShflFhx8f38uconEob93RLjQcpIxuTMA"
+                val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey"
                 
                 // Create JSON body
                 val jsonBody = JSONObject().apply {
