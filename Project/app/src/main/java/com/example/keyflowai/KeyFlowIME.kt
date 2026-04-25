@@ -20,6 +20,13 @@ import android.net.Uri
 import androidx.appcompat.app.AlertDialog
 import android.text.Editable
 import android.text.TextWatcher
+import java.net.HttpURLConnection
+import java.net.URL
+import java.io.OutputStreamWriter
+import java.io.BufferedReader
+import java.io.InputStreamReader
+import org.json.JSONObject
+import org.json.JSONArray
 
 
 class KeyFlowIME : InputMethodService() {
@@ -279,6 +286,11 @@ class KeyFlowIME : InputMethodService() {
                 internalInputField.setText(newText)
                 internalInputField.setSelection(cursorPosition - 1)
             }
+        } else {
+            // If internal input field is empty, send backspace to external app
+            val ic = currentInputConnection
+            ic?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DEL))
+            ic?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DEL))
         }
     }
 
@@ -308,18 +320,23 @@ class KeyFlowIME : InputMethodService() {
         coroutineScope.launch {
             try {
                 val refinedText = callGeminiRefine(textToRefine)
-                if (refinedText.isNotEmpty()) {
-                    internalInputField.setText(refinedText)
-                    internalInputField.setSelection(refinedText.length) // Move cursor to end
-                    showToast("Text refined successfully")
-                } else {
-                    showToast("Failed to refine text")
+                mainHandler.post {
+                    if (refinedText.isNotEmpty()) {
+                        internalInputField.setText(refinedText)
+                        internalInputField.setSelection(refinedText.length) // Move cursor to end
+                        showToast("Text refined successfully")
+                    } else {
+                        showToast("Failed to refine text")
+                    }
+                    isRefining = false
+                    setLoadingState(false)
                 }
             } catch (e: Exception) {
-                showToast("Error: ${e.message}")
-            } finally {
-                isRefining = false
-                setLoadingState(false)
+                mainHandler.post {
+                    showToast("Error: ${e.message}")
+                    isRefining = false
+                    setLoadingState(false)
+                }
             }
         }
     }
@@ -393,29 +410,34 @@ class KeyFlowIME : InputMethodService() {
             coroutineScope.launch {
                 try {
                     val lyricQuote = callGeminiLyric(currentText)
-                    if (lyricQuote.isNotEmpty()) {
-                        // Parse the quote and URL (format: "Quote - Artist")
-                        val parts = lyricQuote.split(" - ")
-                        val quote = if (parts.isNotEmpty()) parts[0] else lyricQuote
-                        val artist = if (parts.size > 1) parts[1] else "Unknown Artist"
-                        
-                        currentLyricQuote = lyricQuote
-                        originalLyricQuote = lyricQuote
-                        isThaiTranslation = false
-                        currentMusicUrl = "https://www.youtube.com/results?search_query=${artist.replace(" ", "+")}+${quote.replace(" ", "+")}"
-                        
-                        lyricRunnerText.text = lyricQuote
-                        lyricRunnerText.isSelected = true // Start marquee
-                        
-                        showToast("Lyric found! Click to insert, Refine to translate")
-                    } else {
-                        showToast("No lyric found for this text")
+                    mainHandler.post {
+                        if (lyricQuote.isNotEmpty()) {
+                            // Parse the quote and URL (format: "Quote - Artist")
+                            val parts = lyricQuote.split(" - ")
+                            val quote = if (parts.isNotEmpty()) parts[0] else lyricQuote
+                            val artist = if (parts.size > 1) parts[1] else "Unknown Artist"
+                            
+                            currentLyricQuote = lyricQuote
+                            originalLyricQuote = lyricQuote
+                            isThaiTranslation = false
+                            currentMusicUrl = "https://www.youtube.com/results?search_query=${artist.replace(" ", "+")}+${quote.replace(" ", "+")}"
+                            
+                            lyricRunnerText.text = lyricQuote
+                            lyricRunnerText.isSelected = true // Start marquee
+                            
+                            showToast("Lyric found! Click to insert, Refine to translate")
+                        } else {
+                            showToast("No lyric found for this text")
+                        }
+                        isRefining = false
+                        setLoadingState(false)
                     }
                 } catch (e: Exception) {
-                    showToast("Error fetching lyric: ${e.message}")
-                } finally {
-                    isRefining = false
-                    setLoadingState(false)
+                    mainHandler.post {
+                        showToast("Error fetching lyric: ${e.message}")
+                        isRefining = false
+                        setLoadingState(false)
+                    }
                 }
             }
         } else {
@@ -428,8 +450,15 @@ class KeyFlowIME : InputMethodService() {
             val ic = currentInputConnection
             ic.commitText(currentLyricQuote, 1)
             
-            // Show music link option
-            showMusicLinkDialog()
+            // Extract song name from current lyric and open YouTube search
+            val songName = currentLyricQuote
+            try {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.youtube.com/results?search_query=" + songName))
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(intent)
+            } catch (e: Exception) {
+                showToast("Could not open YouTube search")
+            }
         }
     }
     
@@ -520,22 +549,75 @@ class KeyFlowIME : InputMethodService() {
     }
     
     // Placeholder AI functions - Replace with actual API calls
+    private suspend fun fetchGeminiResponse(prompt: String): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                val url = URL("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=AIzaSyDlq8pc9fC79_I08kwLy6hGJxkcjwJM_eM")
+                val connection = url.openConnection() as HttpURLConnection
+                
+                connection.requestMethod = "POST"
+                connection.setRequestProperty("Content-Type", "application/json")
+                connection.doOutput = true
+                
+                val jsonPayload = JSONObject().apply {
+                    put("contents", JSONArray().apply {
+                        put(JSONObject().apply {
+                            put("parts", JSONArray().apply {
+                                put(JSONObject().apply {
+                                    put("text", prompt)
+                                })
+                            })
+                        })
+                    })
+                }
+                
+                val outputStream = connection.outputStream
+                val writer = OutputStreamWriter(outputStream, "UTF-8")
+                writer.write(jsonPayload.toString())
+                writer.flush()
+                writer.close()
+                outputStream.close()
+                
+                val responseCode = connection.responseCode
+                if (responseCode == HttpURLConnection.HTTP_OK) {
+                    val inputStream = connection.inputStream
+                    val reader = BufferedReader(InputStreamReader(inputStream, "UTF-8"))
+                    val response = StringBuilder()
+                    var line: String?
+                    while (reader.readLine().also { line = it } != null) {
+                        response.append(line)
+                    }
+                    reader.close()
+                    inputStream.close()
+                    
+                    val jsonResponse = JSONObject(response.toString())
+                    val candidates = jsonResponse.getJSONArray("candidates")
+                    if (candidates.length() > 0) {
+                        val candidate = candidates.getJSONObject(0)
+                        val content = candidate.getJSONObject("content")
+                        val parts = content.getJSONArray("parts")
+                        if (parts.length() > 0) {
+                            val part = parts.getJSONObject(0)
+                            return@withContext part.getString("text").trim()
+                        }
+                    }
+                    return@withContext ""
+                } else {
+                    throw Exception("HTTP Error: $responseCode")
+                }
+            } catch (e: Exception) {
+                throw Exception("API call failed: ${e.message}")
+            } finally {
+                // Connection will be automatically closed
+            }
+        }
+    }
+    
     private suspend fun callGeminiRefine(text: String): String {
         return withContext(Dispatchers.IO) {
             try {
-                // Simulate API delay
-                delay(1000)
-                
-                val prompt = """
-                    Please refine and improve the following text. Make it more professional, clear, and grammatically correct. 
-                    If the text is in Thai, improve the Thai. If in English, improve the English.
-                    Only return the refined text without any explanation.
-                    
-                    Original text: $text
-                """.trimIndent()
-                
-                val response = generativeModel.generateContent(prompt)
-                response.text?.trim() ?: text
+                val prompt = "Rewrite this Thai text to be very professional/polite or translate to English if appropriate: $text"
+                return@withContext fetchGeminiResponse(prompt)
             } catch (e: Exception) {
                 throw Exception("AI processing failed: ${e.message}")
             }
@@ -545,19 +627,8 @@ class KeyFlowIME : InputMethodService() {
     private suspend fun callGeminiLyric(text: String): String {
         return withContext(Dispatchers.IO) {
             try {
-                // Simulate API delay
-                delay(1500)
-                
-                val prompt = """
-                    Based on the following text/emotion, return an English song lyric quote that matches the feeling.
-                    Format: "Quote - Artist"
-                    Keep it concise and meaningful.
-                    
-                    Text/Emotion: $text
-                """.trimIndent()
-                
-                val response = generativeModel.generateContent(prompt)
-                response.text?.trim() ?: ""
+                val prompt = "Based on this emotion $text, suggest one English song lyric quote with artist name. Return only the quote and artist."
+                return@withContext fetchGeminiResponse(prompt)
             } catch (e: Exception) {
                 throw Exception("Failed to fetch lyric: ${e.message}")
             }
