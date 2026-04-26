@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="48dp"
+    android:layout_height="48dp"
+    android:background="@drawable/bg_popup_rounded"
+    android:gravity="center"
+    android:textColor="#FFFFFF"
+    android:textSize="24sp"
+    android:textStyle="bold"
+    android:elevation="8dp"
+    android:shadowColor="#80000000"
+    android:shadowDx="2"
+    android:shadowDy="2"
+    android:shadowRadius="4" />

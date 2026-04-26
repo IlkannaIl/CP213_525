@@ -83,6 +83,16 @@ class KeyFlowIME : InputMethodService() {
     private var deleteHandler: Handler? = null
     private var deleteRunnable: Runnable? = null
     private var isDeletePressed = false
+    
+    // Key preview handling
+    private var keyPreviewPopup: PopupWindow? = null
+    private var keyPreviewHandler: Handler? = null
+    private var keyPreviewRunnable: Runnable? = null
+    
+    // Trackpad mode handling
+    private var isTrackpadMode = false
+    private var trackpadStartX = 0f
+    private var trackpadInitialCursorPos = 0
 
     override fun onCreateInputView(): View {
         
@@ -153,6 +163,43 @@ class KeyFlowIME : InputMethodService() {
         
         // Setup functional buttons
         setupFunctionalButtons(view)
+        
+        // Setup key preview
+        setupKeyPreview()
+    }
+    
+    private fun setupKeyPreview() {
+        // Initialize key preview popup
+        val previewView = layoutInflater.inflate(R.layout.key_preview_layout, null) as TextView
+        keyPreviewPopup = PopupWindow(
+            previewView,
+            48,
+            48,
+            false
+        ).apply {
+            setBackgroundDrawable(resources.getDrawable(android.R.drawable.dialog_frame, null))
+            elevation = 8f
+        }
+    }
+    
+    private fun showKeyPreview(button: Button) {
+        val previewView = keyPreviewPopup?.contentView as? TextView
+        previewView?.text = button.text
+        
+        val location = IntArray(2)
+        button.getLocationOnScreen(location)
+        val x = location[0] + button.width / 2 - 24
+        val y = location[1] - 60
+        
+        keyPreviewPopup?.showAtLocation(button, Gravity.NO_GRAVITY, x, y)
+        
+        keyPreviewHandler = Handler(Looper.getMainLooper())
+        keyPreviewRunnable = object : Runnable {
+            override fun run() {
+                keyPreviewPopup?.dismiss()
+            }
+        }
+        keyPreviewHandler?.postDelayed(keyPreviewRunnable!!, 100)
     }
     
     private fun setupCharacterButtons(view: CustomKeyboardView) {
@@ -164,8 +211,19 @@ class KeyFlowIME : InputMethodService() {
                     view.findViewById<Button>(resId)?.let { button ->
 
                         if (isCharacterButton(idName)) {
-                            button.setOnClickListener {
-                                appendToInternalInput(button.text.toString())
+                            button.setOnTouchListener { _, event ->
+                                when (event.action) {
+                                    MotionEvent.ACTION_DOWN -> {
+                                        showKeyPreview(button)
+                                        true
+                                    }
+                                    MotionEvent.ACTION_UP -> {
+                                        appendToInternalInput(button.text.toString())
+                                        keyPreviewPopup?.dismiss()
+                                        true
+                                    }
+                                    else -> false
+                                }
                             }
                         }
                     }
@@ -187,9 +245,60 @@ class KeyFlowIME : InputMethodService() {
         // Delete button
         view.findViewById<Button>(R.id.btn_DEL)?.let { setupDeleteButton(it) }
         
-        // Space button
-        view.findViewById<Button>(R.id.btn_SPACE)?.setOnClickListener {
-            appendToInternalInput(" ")
+        // Space button with trackpad mode
+        view.findViewById<Button>(R.id.btn_SPACE)?.setOnTouchListener { _, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN -> {
+                    trackpadStartX = event.rawX
+                    trackpadInitialCursorPos = internalInputField.selectionStart
+                    isTrackpadMode = true
+                    keyPreviewHandler = Handler(Looper.getMainLooper())
+                    keyPreviewRunnable = object : Runnable {
+                        override fun run() {
+                            if (isTrackpadMode) {
+                                keyPreviewHandler?.postDelayed(this, 100)
+                            }
+                        }
+                    }
+                    keyPreviewHandler?.postDelayed(keyPreviewRunnable!!, 500) // Start trackpad after 500ms
+                    true
+                }
+                MotionEvent.ACTION_MOVE -> {
+                    if (isTrackpadMode) {
+                        val deltaX = event.rawX - trackpadStartX
+                        val moveThreshold = 30f
+                        
+                        if (kotlin.math.abs(deltaX) > moveThreshold) {
+                            val currentText = internalInputField.text.toString()
+                            val maxPos = currentText.length
+                            
+                            // Move cursor based on swipe direction
+                            val newPos = when {
+                                deltaX > 0 -> (trackpadInitialCursorPos + 1).coerceAtMost(maxPos)
+                                deltaX < 0 -> (trackpadInitialCursorPos - 1).coerceAtLeast(0)
+                                else -> trackpadInitialCursorPos
+                            }
+                            
+                            internalInputField.setSelection(newPos)
+                            trackpadInitialCursorPos = newPos
+                            trackpadStartX = event.rawX
+                        }
+                    }
+                    true
+                }
+                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                    if (isTrackpadMode) {
+                        isTrackpadMode = false
+                        keyPreviewHandler?.removeCallbacks(keyPreviewRunnable!!)
+                        // If it was a short press (less than 500ms), insert space
+                        if (System.currentTimeMillis() - event.downTime < 500) {
+                            appendToInternalInput(" ")
+                        }
+                    }
+                    true
+                }
+                else -> false
+            }
         }
         
         // Enter button
@@ -290,6 +399,15 @@ class KeyFlowIME : InputMethodService() {
     }
 
     private fun handleDelete() {
+        val ic = currentInputConnection
+        val selectedText = ic.getSelectedText(0)?.toString()
+        
+        // If user has selected text, delete the entire selection
+        if (selectedText != null && selectedText.isNotEmpty()) {
+            ic.commitText("", 1) // Delete selected text
+            return
+        }
+        
         val currentText = internalInputField.text.toString()
         if (currentText.isNotEmpty()) {
             val cursorPosition = internalInputField.selectionStart
@@ -300,7 +418,6 @@ class KeyFlowIME : InputMethodService() {
             }
         } else {
             // If internal input field is empty, send backspace to external app
-            val ic = currentInputConnection
             ic?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_DOWN, KeyEvent.KEYCODE_DEL))
             ic?.sendKeyEvent(KeyEvent(KeyEvent.ACTION_UP, KeyEvent.KEYCODE_DEL))
         }
@@ -309,14 +426,65 @@ class KeyFlowIME : InputMethodService() {
     private fun handleRefine() {
         if (isRefining) return
         
-        // Dual-mode logic: Check if we have a lyric quote to translate
-        if (currentLyricQuote.isNotEmpty()) {
-            // Toggle between English and Thai translation
-            toggleLyricTranslation()
-        } else {
-            // Refine text from internal input field
-            refineInternalInput()
+        val currentText = internalInputField.text.toString()
+        if (currentText.isEmpty()) {
+            showToast("Type some text to refine")
+            return
         }
+        
+        // Independent toggle logic: Check if we should toggle back to original text
+        if (isInternalTextTranslated && originalInternalText.isNotEmpty()) {
+            // Toggle back to original Thai text
+            internalInputField.setText(originalInternalText)
+            internalInputField.setSelection(originalInternalText.length)
+            isInternalTextTranslated = false
+            showToast("Reverted to original text")
+            return
+        }
+        
+        // Save original text and translate to English if Thai, or refine if English
+        originalInternalText = currentText
+        isRefining = true
+        setLoadingState(true)
+        
+        serviceScope.launch {
+            try {
+                val prompt = if (isThaiText(currentText)) {
+                    "Translate this Thai text to professional English. Output ONLY the polished English translation, no explanations."
+                } else {
+                    "Refine and improve this English text to be more professional and clear. Output ONLY the refined English text, no explanations."
+                }
+                
+                val refinedText = withContext(Dispatchers.IO) {
+                    fetchGeminiResponse(prompt)
+                }
+                
+                withContext(Dispatchers.Main) {
+                    if (refinedText.isNotEmpty()) {
+                        internalInputField.setText(refinedText)
+                        internalInputField.setSelection(refinedText.length)
+                        isInternalTextTranslated = true
+                        val action = if (isThaiText(currentText)) "translated" else "refined"
+                        showToast("Text $action successfully")
+                    } else {
+                        showToast("Failed to process text")
+                    }
+                    isRefining = false
+                    setLoadingState(false)
+                }
+            } catch (e: Exception) {
+                Log.e("GEMINI_ERROR", "Error: ", e)
+                withContext(Dispatchers.Main) {
+                    showToast("Error: ${e.message}")
+                    isRefining = false
+                    setLoadingState(false)
+                }
+            }
+        }
+    }
+    
+    private fun isThaiText(text: String): Boolean {
+        return text.any { char -> char.code in 0x0E00..0x0E7F }
     }
     
     private fun refineInternalInput() {
@@ -496,9 +664,9 @@ class KeyFlowIME : InputMethodService() {
             LinearLayout.LayoutParams.WRAP_CONTENT,
             true // focusable
         ).apply {
-            // Set background with rounded corners
+            // Set background with rounded corners and shadow
             setBackgroundDrawable(resources.getDrawable(android.R.drawable.dialog_frame, null))
-            elevation = 8f
+            elevation = 12f // Increased elevation for better shadow
         }
         
         // Setup popup content
@@ -509,32 +677,31 @@ class KeyFlowIME : InputMethodService() {
         lyricTextView?.text = lyric
         
         listenButton?.setOnClickListener {
+            // Dismiss popup first, then open music link
+            musicPopupWindow?.dismiss()
             try {
                 val intent = Intent(Intent.ACTION_VIEW, Uri.parse(musicUrl))
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 startActivity(intent)
-                musicPopupWindow?.dismiss()
             } catch (e: Exception) {
                 showToast("Could not open music app")
             }
         }
         
         closeButton?.setOnClickListener {
+            // Simply dismiss the popup
             musicPopupWindow?.dismiss()
         }
         
-        // Show popup above the keyboard
-        val location = IntArray(2)
-        musicModeButton.getLocationOnScreen(location)
-        val x = location[0] + musicModeButton.width / 2 - 200 // Center horizontally
-        val y = location[1] - 200 // Show above the button
+        // Show popup above the keyboard, centered on screen
+        musicPopupWindow?.showAtLocation(
+            musicModeButton,
+            Gravity.TOP or Gravity.CENTER_HORIZONTAL,
+            0, // X offset (centered by Gravity.CENTER_HORIZONTAL)
+            100 // Y offset from top to avoid overlapping with status bar
+        )
         
-        musicPopupWindow?.showAtLocation(musicModeButton, Gravity.NO_GRAVITY, x, y)
-        
-        // Auto-dismiss after 5 seconds
-        mainHandler.postDelayed({
-            musicPopupWindow?.dismiss()
-        }, 5000)
+        // No auto-dismiss - popup stays visible until user interaction
     }
     
     private fun handleLyricClick() {
@@ -806,11 +973,23 @@ class KeyFlowIME : InputMethodService() {
         }
     }
 
+    override fun onFinishInput() {
+        super.onFinishInput()
+        // Auto-clear internal input field when keyboard closes
+        internalInputField.setText("")
+        // Reset translation states
+        isInternalTextTranslated = false
+        originalInternalText = ""
+        isLyricRunnerTranslated = false
+        originalLyricRunnerText = ""
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         serviceScope.cancel()
         stopDeleteRepeat()
         musicPopupWindow?.dismiss()
+        keyPreviewPopup?.dismiss()
     }
 
     private fun startDeleteRepeat() {
