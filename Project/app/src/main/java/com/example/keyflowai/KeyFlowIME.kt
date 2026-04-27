@@ -75,10 +75,7 @@ class KeyFlowIME : InputMethodService() {
     private var deleteRunnable: Runnable? = null
     private var isDeletePressed = false
     
-    // Key preview handling
-    private var keyPreviewPopup: PopupWindow? = null
-    private var keyPreviewHandler: Handler? = null
-    private var keyPreviewRunnable: Runnable? = null
+    // Key preview disabled to prevent misalignment issues
     
     // Trackpad mode handling
     private var isTrackpadMode = false
@@ -156,44 +153,9 @@ class KeyFlowIME : InputMethodService() {
         
         // Setup functional buttons
         setupFunctionalButtons(view)
-        
-        // Setup key preview
-        setupKeyPreview()
     }
     
-    private fun setupKeyPreview() {
-        // Initialize key preview popup
-        val previewView = layoutInflater.inflate(R.layout.key_preview_layout, null) as TextView
-        keyPreviewPopup = PopupWindow(
-            previewView,
-            48,
-            48,
-            false
-        ).apply {
-            setBackgroundDrawable(resources.getDrawable(android.R.drawable.dialog_frame, null))
-            elevation = 8f
-        }
-    }
-    
-    private fun showKeyPreview(button: Button) {
-        val previewView = keyPreviewPopup?.contentView as? TextView
-        previewView?.text = button.text
-        
-        val location = IntArray(2)
-        button.getLocationOnScreen(location)
-        val x = location[0] + button.width / 2 - 24
-        val y = location[1] - 60
-        
-        keyPreviewPopup?.showAtLocation(button, Gravity.NO_GRAVITY, x, y)
-        
-        keyPreviewHandler = Handler(Looper.getMainLooper())
-        keyPreviewRunnable = object : Runnable {
-            override fun run() {
-                keyPreviewPopup?.dismiss()
-            }
-        }
-        keyPreviewHandler?.postDelayed(keyPreviewRunnable!!, 100)
-    }
+    // Key preview disabled
     
     private fun setupCharacterButtons(view: CustomKeyboardView) {
         for (row in 1..5) {
@@ -207,12 +169,11 @@ class KeyFlowIME : InputMethodService() {
                             button.setOnTouchListener { _, event ->
                                 when (event.action) {
                                     MotionEvent.ACTION_DOWN -> {
-                                        showKeyPreview(button)
+                                        appendToInternalInput(button.text.toString())
                                         true
                                     }
                                     MotionEvent.ACTION_UP -> {
-                                        appendToInternalInput(button.text.toString())
-                                        keyPreviewPopup?.dismiss()
+                                        // Key preview disabled - handle input on down event
                                         true
                                     }
                                     else -> false
@@ -556,7 +517,7 @@ class KeyFlowIME : InputMethodService() {
         serviceScope.cancel()
         stopDeleteRepeat()
         musicPopupWindow?.dismiss()
-        keyPreviewPopup?.dismiss()
+        // Key preview disabled - no popup to dismiss
         // Clear clipboard listener
         clipboardManager.removePrimaryClipChangedListener(null)
     }
