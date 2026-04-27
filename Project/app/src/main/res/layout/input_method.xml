@@ -3,8 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="300dp"
     android:orientation="vertical"
-    android:background="#3E2723"
-    android:visibility="visible"> <!-- Deep Brown Keyboard Background -->
+    android:background="#CCF1F8E9"
+    android:visibility="visible"> <!-- Pale Translucent Green Keyboard Background -->
 
     <!-- Smart Draft Bar -->
     <LinearLayout
@@ -22,9 +22,9 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="#FAF0E6"
+            android:textColor="#4A7C59"
             android:hint="ร่างข้อความที่นี่..."
-            android:textColorHint="#CCCCCC"
+            android:textColorHint="#8B9A8C"
             android:background="@drawable/bg_input_field_rounded"
             android:textSize="14sp"
             android:inputType="textMultiLine"
@@ -53,7 +53,7 @@
             android:layout_height="40dp"
             android:text="🎵"
             android:textSize="20sp"
-            android:textColor="#FAF0E6"
+            android:textColor="#4A7C59"
             android:background="@drawable/bg_icon_button_transparent"
             android:contentDescription="Music mode" />
 
@@ -70,7 +70,7 @@
             android:layout_height="40dp"
             android:text="✨"
             android:textSize="20sp"
-            android:textColor="#FAF0E6"
+            android:textColor="#4A7C59"
             android:background="@drawable/bg_icon_button_transparent"
             android:contentDescription="Refine AI"
             android:layout_marginEnd="8dp" />
@@ -81,7 +81,7 @@
             android:layout_height="40dp"
             android:text="✈️"
             android:textSize="20sp"
-            android:textColor="#FAF0E6"
+            android:textColor="#4A7C59"
             android:background="@drawable/bg_icon_button_transparent"
             android:contentDescription="Send to app" />
                 
@@ -106,7 +106,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
                 android:text="♪ Clipboard empty - copy some text! ♪"
-                android:textColor="#FFFFFF"
+                android:textColor="#4A7C59"
                 android:textSize="14sp"
                 android:gravity="center_vertical"
                 android:paddingHorizontal="12dp"

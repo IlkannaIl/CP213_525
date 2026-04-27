@@ -15,7 +15,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="🎵 Recommended Song"
-        android:textColor="#FFFFFF"
+        android:textColor="#4A7C59"
         android:textSize="16sp"
         android:textStyle="bold"
         android:gravity="center"
@@ -29,11 +29,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="16dp"
-        android:background="#1E293B"
+        android:background="#CCF1F8E9"
         android:gravity="center"
         android:lineSpacingExtra="2dp"
         android:padding="8dp"
-        android:textColor="#E2E8F0"
+        android:textColor="#4A7C59"
         android:textSize="14sp" />
 
     <LinearLayout
@@ -48,7 +48,7 @@
             android:layout_height="36dp"
             android:layout_weight="1"
             android:text="🎧 Listen"
-            android:textColor="#FFFFFF"
+            android:textColor="#4A7C59"
             android:textSize="12sp"
             android:textStyle="bold"
             android:background="@drawable/bg_primary_gradient"
@@ -61,7 +61,7 @@
             android:layout_height="36dp"
             android:layout_weight="1"
             android:text="Close"
-            android:textColor="#FFFFFF"
+            android:textColor="#4A7C59"
             android:textSize="12sp"
             android:background="@drawable/bg_secondary"
             android:elevation="4dp" />

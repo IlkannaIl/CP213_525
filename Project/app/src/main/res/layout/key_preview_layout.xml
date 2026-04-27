@@ -4,7 +4,7 @@
     android:layout_height="48dp"
     android:background="@drawable/bg_popup_rounded"
     android:gravity="center"
-    android:textColor="#FFFFFF"
+    android:textColor="#4A7C59"
     android:textSize="24sp"
     android:textStyle="bold"
     android:elevation="8dp"

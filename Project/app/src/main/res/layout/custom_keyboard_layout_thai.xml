@@ -5,7 +5,7 @@
     android:orientation="vertical"
     xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="HardcodedText"
-    android:background="#3E2723"
+    android:background="#CCF1F8E9"
     android:paddingBottom="24dp">
 
     <!-- First Row - 12 Thai Characters -->
