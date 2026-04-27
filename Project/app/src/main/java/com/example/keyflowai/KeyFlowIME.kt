@@ -333,8 +333,18 @@ class KeyFlowIME : InputMethodService() {
         val textToSend = internalInputField.text.toString()
         if (textToSend.isNotEmpty()) {
             val ic = currentInputConnection
+            
+            // Commit text to external app at current cursor position
             ic?.commitText(textToSend, 1)
+            
+            // Add a space after the committed text for better typing flow
+            ic?.commitText(" ", 1)
+            
+            // Clear internal input field
             internalInputField.setText("")
+            
+            // Ensure focus stays on internal input field for continued typing
+            internalInputField.requestFocus()
         }
     }
     
@@ -353,15 +363,28 @@ class KeyFlowIME : InputMethodService() {
 
     private fun handleDelete() {
         val ic = currentInputConnection
-        val selectedText = ic.getSelectedText(0)?.toString()
         
-        // If user has selected text, delete the entire selection
-        if (selectedText != null && selectedText.isNotEmpty()) {
-            ic.commitText("", 1) // Delete selected text
+        // First, check if user has selected text in internal_input_field
+        val currentText = internalInputField.text.toString()
+        val selectionStart = internalInputField.selectionStart
+        val selectionEnd = internalInputField.selectionEnd
+        
+        if (selectionStart != selectionEnd) {
+            // User has selected text in internal input field - delete the selection
+            val newText = currentText.substring(0, selectionStart) + currentText.substring(selectionEnd)
+            internalInputField.setText(newText)
+            internalInputField.setSelection(selectionStart)
             return
         }
         
-        val currentText = internalInputField.text.toString()
+        // Check if user has selected text in external app
+        val selectedText = ic.getSelectedText(0)?.toString()
+        if (selectedText != null && selectedText.isNotEmpty()) {
+            ic.commitText("", 1) // Delete selected text in external app
+            return
+        }
+        
+        // Handle normal delete in internal input field
         if (currentText.isNotEmpty()) {
             val cursorPosition = internalInputField.selectionStart
             if (cursorPosition > 0) {
