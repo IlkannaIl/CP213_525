@@ -3,7 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="300dp"
     android:orientation="vertical"
-    android:background="#0F172A"> <!-- Dark Mode Background -->
+    android:background="#3E2723"> <!-- Deep Brown Keyboard Background -->
 
     <!-- Smart Draft Bar -->
     <LinearLayout
@@ -86,11 +86,11 @@
             android:background="@drawable/bg_primary_gradient" />
     </RelativeLayout>
 
-    <!-- 2. Suggestion Strip -->
+    <!-- 2. Suggestion Strip (Clipboard Bar) -->
     <HorizontalScrollView
         android:layout_width="match_parent"
         android:layout_height="40dp"
-        android:background="#1E293B">
+        android:background="@drawable/sunset_gradient">
         <LinearLayout 
                 android:id="@+id/suggestion_container"
                 android:layout_width="wrap_content"
@@ -99,13 +99,13 @@
                 android:gravity="center_vertical"
                 android:paddingHorizontal="8dp">
             
-            <!-- Lyric Runner Text for The Lyricist Keyboard -->
+            <!-- Lyric Runner Text repurposed for clipboard empty state -->
             <TextView
                 android:id="@+id/lyric_runner_text"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
-                android:text="♪ Welcome to The Lyricist Keyboard ♪"
-                android:textColor="#E2E8F0"
+                android:text="♪ Clipboard empty - copy some text! ♪"
+                android:textColor="#FFFFFF"
                 android:textSize="14sp"
                 android:gravity="center_vertical"
                 android:paddingHorizontal="12dp"

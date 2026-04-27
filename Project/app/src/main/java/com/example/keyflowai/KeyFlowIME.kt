@@ -14,14 +14,6 @@ import android.view.LayoutInflater
 import kotlinx.coroutines.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import okhttp3.*
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
-import org.json.JSONException
-import org.json.JSONArray
-import java.io.IOException
-import java.util.concurrent.TimeUnit
 import android.os.Handler
 import android.os.Looper
 import android.view.MotionEvent
@@ -33,6 +25,9 @@ import androidx.appcompat.app.AlertDialog
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Log
+import android.content.ClipboardManager
+import android.content.ClipData
+import android.widget.HorizontalScrollView
 
 
 class KeyFlowIME : InputMethodService() {
@@ -43,20 +38,16 @@ class KeyFlowIME : InputMethodService() {
     private lateinit var lyricRunnerText: TextView
     private lateinit var internalInputField: EditText
     private lateinit var sendToAppButton: Button
+    private lateinit var suggestionContainer: LinearLayout
+    private lateinit var clipboardManager: ClipboardManager
     
-    // Lyricist Keyboard state
-    private var currentLyricQuote: String = ""
-    private var originalLyricQuote: String = ""
-    private var isThaiTranslation = false
-    private var currentMusicUrl: String = ""
+    // Clipboard functionality
+    private val clipboardHistory = mutableListOf<String>()
+    private val maxClipboardItems = 5
     
     // Internal input toggle state
     private var originalInternalText: String = ""
     private var isInternalTextTranslated = false
-    
-    // Lyric runner toggle state
-    private var originalLyricRunnerText: String = ""
-    private var isLyricRunnerTranslated = false
     
     // Music popup window
     private var musicPopupWindow: PopupWindow? = null
@@ -106,18 +97,20 @@ class KeyFlowIME : InputMethodService() {
         lyricRunnerText = rootView.findViewById(R.id.lyric_runner_text)
         internalInputField = rootView.findViewById(R.id.internal_input_field)
         sendToAppButton = rootView.findViewById(R.id.btn_send_to_app)
+        suggestionContainer = rootView.findViewById(R.id.suggestion_container)
 
         refineButton?.setOnClickListener {
             handleRefine()
         }
-        
         musicModeButton?.setOnClickListener {
             handleMusicMode()
         }
         
-        lyricRunnerText?.setOnClickListener {
-            handleLyricClick()
-        }
+        // Setup clipboard listener
+        setupClipboardListener()
+        
+        // Initialize clipboard display
+        updateClipboardDisplay()
         
         sendToAppButton?.setOnClickListener {
             handleSendToApp()
@@ -400,235 +393,32 @@ class KeyFlowIME : InputMethodService() {
     }
 
     private fun handleRefine() {
-        if (isRefining) return
-        
         val currentText = internalInputField.text.toString()
         if (currentText.isEmpty()) {
             showToast("Type some text to refine")
             return
         }
         
-        // Independent toggle logic: Check if we should toggle back to original text
+        // Simple toggle between original and refined text (placeholder for future AI integration)
         if (isInternalTextTranslated && originalInternalText.isNotEmpty()) {
-            // Toggle back to original Thai text
+            // Toggle back to original text
             internalInputField.setText(originalInternalText)
             internalInputField.setSelection(originalInternalText.length)
             isInternalTextTranslated = false
             showToast("Reverted to original text")
-            return
-        }
-        
-        // Save original text and translate to English if Thai, or refine if English
-        originalInternalText = currentText
-        isRefining = true
-        setLoadingState(true)
-        
-        serviceScope.launch {
-            try {
-                val prompt = if (isThaiText(currentText)) {
-                    "Translate this Thai text to professional English. Output ONLY the polished English translation, no explanations."
-                } else {
-                    "Refine and improve this English text to be more professional and clear. Output ONLY the refined English text, no explanations."
-                }
-                
-                val refinedText = withContext(Dispatchers.IO) {
-                    fetchGeminiResponse(prompt)
-                }
-                
-                withContext(Dispatchers.Main) {
-                    if (refinedText.isNotEmpty()) {
-                        internalInputField.setText(refinedText)
-                        internalInputField.setSelection(refinedText.length)
-                        isInternalTextTranslated = true
-                        val action = if (isThaiText(currentText)) "translated" else "refined"
-                        showToast("Text $action successfully")
-                    } else {
-                        showToast("Failed to process text")
-                    }
-                    isRefining = false
-                    setLoadingState(false)
-                }
-            } catch (e: Exception) {
-                Log.e("GEMINI_ERROR", "Error: ", e)
-                withContext(Dispatchers.Main) {
-                    showToast("Error: ${e.message}")
-                    isRefining = false
-                    setLoadingState(false)
-                }
-            }
-        }
-    }
-    
-    private fun isThaiText(text: String): Boolean {
-        return text.any { char -> char.code in 0x0E00..0x0E7F }
-    }
-    
-    private fun refineInternalInput() {
-        val currentText = internalInputField.text.toString()
-        if (currentText.isEmpty()) {
-            showToast("Type some text to refine")
-            return
-        }
-        
-        // Check if we should toggle back to original Thai text
-        if (isInternalTextTranslated && originalInternalText.isNotEmpty()) {
-            // Toggle back to original Thai
-            internalInputField.setText(originalInternalText)
-            internalInputField.setSelection(originalInternalText.length)
-            isInternalTextTranslated = false
-            showToast("Reverted to original Thai text")
-            return
-        }
-        
-        // Save original Thai text and translate to English
-        originalInternalText = currentText
-        isRefining = true
-        setLoadingState(true)
-        
-        serviceScope.launch {
-            try {
-                val translatedText = withContext(Dispatchers.IO) {
-                    val prompt = "Translate this Thai text to professional English. Output ONLY the polished English translation, no explanations."
-                    fetchGeminiResponse(prompt)
-                }
-                
-                withContext(Dispatchers.Main) {
-                    if (translatedText.isNotEmpty()) {
-                        internalInputField.setText(translatedText)
-                        internalInputField.setSelection(translatedText.length)
-                        isInternalTextTranslated = true
-                        showToast("Text translated successfully")
-                    } else {
-                        showToast("Failed to translate text")
-                    }
-                    isRefining = false
-                    setLoadingState(false)
-                }
-            } catch (e: Exception) {
-                Log.e("GEMINI_ERROR", "Error: ", e)
-                withContext(Dispatchers.Main) {
-                    showToast("Error: ${e.message}")
-                    isRefining = false
-                    setLoadingState(false)
-                }
-            }
-        }
-    }
-    
-    private fun toggleLyricTranslation() {
-        if (isRefining) return
-        
-        isRefining = true
-        setLoadingState(true)
-        
-        serviceScope.launch {
-            try {
-                if (isThaiTranslation) {
-                    // Show original English lyric
-                    lyricRunnerText.text = originalLyricQuote
-                    isThaiTranslation = false
-                } else {
-                    // Show Thai translation
-                    val thaiTranslation = translateLyricToThai(originalLyricQuote)
-                    lyricRunnerText.text = thaiTranslation
-                    isThaiTranslation = true
-                }
-            } catch (e: Exception) {
-                showToast("Translation error: ${e.message}")
-            } finally {
-                isRefining = false
-                setLoadingState(false)
-            }
-        }
-    }
-    
-    private fun refineInputText() {
-        val ic = currentInputConnection
-        val selectedText = ic.getSelectedText(0)?.toString() ?: ""
-
-        if (selectedText.isEmpty()) {
-            showToast("Please select text to refine")
-            return
-        }
-
-        isRefining = true
-        setLoadingState(true)
-
-        serviceScope.launch {
-            try {
-                val refinedText = refineTextWithAI(selectedText)
-                if (refinedText.isNotEmpty()) {
-                    ic.commitText(refinedText, 1)
-                    showToast("Text refined successfully")
-                } else {
-                    showToast("Failed to refine text")
-                }
-            } catch (e: Exception) {
-                showToast("Error: ${e.message}")
-            } finally {
-                isRefining = false
-                setLoadingState(false)
-            }
-        }
-    }
-
-    private fun handleMusicMode() {
-        if (isRefining) return
-        
-        val currentText = internalInputField.text.toString()
-        
-        if (currentText.isNotEmpty()) {
-            isRefining = true
-            setLoadingState(true)
-            
-            serviceScope.launch {
-                try {
-                    val response = withContext(Dispatchers.IO) {
-                        val prompt = "Give me one short English song lyric quote and the YouTube search query for it based on this emotion: $currentText. Format: Quote - Artist | SearchQuery"
-                        fetchGeminiResponse(prompt)
-                    }
-                    
-                    withContext(Dispatchers.Main) {
-                        if (response.isNotEmpty()) {
-                            // Parse the response (format: "Quote - Artist | SearchQuery")
-                            val parts = response.split(" | ")
-                            val lyricPart = if (parts.isNotEmpty()) parts[0] else response
-                            val searchQuery = if (parts.size > 1) parts[1] else lyricPart
-                            
-                            currentLyricQuote = lyricPart
-                            originalLyricQuote = lyricPart
-                            isThaiTranslation = false
-                            currentMusicUrl = "https://www.youtube.com/results?search_query=${searchQuery.replace(" ", "+")}"
-                            
-                            // Show popup window with song info
-                            showMusicPopup(lyricPart, currentMusicUrl)
-                            
-                            // Also update lyric runner text
-                            lyricRunnerText.text = lyricPart
-                            lyricRunnerText.isSelected = true // Start marquee
-                            
-                            showToast("Song found! Click lyric to translate")
-                        } else {
-                            showToast("No response from AI")
-                        }
-                        isRefining = false
-                        setLoadingState(false)
-                    }
-                } catch (e: Exception) {
-                    Log.e("GEMINI_ERROR", "Error: ", e)
-                    withContext(Dispatchers.Main) {
-                        showToast("Error: ${e.message}")
-                        isRefining = false
-                        setLoadingState(false)
-                    }
-                }
-            }
         } else {
-            showToast("Type some text to get a matching lyric")
+            // Placeholder for future AI refinement
+            showToast("AI refinement disabled - clipboard mode active")
         }
     }
     
-    private fun showMusicPopup(lyric: String, musicUrl: String) {
+    private fun handleMusicMode() {
+        // Keep music mode functionality intact for demo purposes
+        // Show a simple demo popup
+        showMusicDemoPopup()
+    }
+    
+    private fun showMusicDemoPopup() {
         // Dismiss any existing popup
         musicPopupWindow?.dismiss()
         
@@ -642,7 +432,7 @@ class KeyFlowIME : InputMethodService() {
         ).apply {
             // Set background with rounded corners and shadow
             setBackgroundDrawable(resources.getDrawable(android.R.drawable.dialog_frame, null))
-            elevation = 12f // Increased elevation for better shadow
+            elevation = 12f
         }
         
         // Setup popup content
@@ -650,22 +440,14 @@ class KeyFlowIME : InputMethodService() {
         val listenButton = popupView.findViewById<Button>(R.id.popup_listen_button)
         val closeButton = popupView.findViewById<Button>(R.id.popup_close_button)
         
-        lyricTextView?.text = lyric
+        lyricTextView?.text = "🎵 Music Mode Demo\nClipboard mode is now active!"
         
         listenButton?.setOnClickListener {
-            // Dismiss popup first, then open music link
             musicPopupWindow?.dismiss()
-            try {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(musicUrl))
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                startActivity(intent)
-            } catch (e: Exception) {
-                showToast("Could not open music app")
-            }
+            showToast("Music feature preserved for demo")
         }
         
         closeButton?.setOnClickListener {
-            // Simply dismiss the popup
             musicPopupWindow?.dismiss()
         }
         
@@ -676,276 +458,74 @@ class KeyFlowIME : InputMethodService() {
             0, // X offset (centered by Gravity.CENTER)
             -400 // Negative Y offset to force popup to upper half of screen
         )
-        
-        // No auto-dismiss - popup stays visible until user interaction
     }
     
-    private fun handleLyricClick() {
-        val currentLyricText = lyricRunnerText.text.toString()
+    private fun setupClipboardListener() {
+        clipboardManager = getSystemService(CLIPBOARD_SERVICE) as ClipboardManager
+        clipboardManager.addPrimaryClipChangedListener {
+            // Handle clipboard change
+            val clipData = clipboardManager.primaryClip
+            if (clipData != null && clipData.itemCount > 0) {
+                val newText = clipData.getItemAt(0).text?.toString()
+                if (!newText.isNullOrEmpty() && newText != "") {
+                    addToClipboardHistory(newText)
+                }
+            }
+        }
+    }
+    
+    private fun addToClipboardHistory(text: String) {
+        // Remove if already exists to avoid duplicates
+        clipboardHistory.removeAll { it == text }
         
-        // Check if we should toggle back to original lyric
-        if (isLyricRunnerTranslated && originalLyricRunnerText.isNotEmpty()) {
-            lyricRunnerText.text = originalLyricRunnerText
-            isLyricRunnerTranslated = false
-            showToast("Reverted to original lyric")
-            return
+        // Add to beginning
+        clipboardHistory.add(0, text)
+        
+        // Limit to max items
+        while (clipboardHistory.size > maxClipboardItems) {
+            clipboardHistory.removeAt(clipboardHistory.size - 1)
         }
         
-        // If we have a current lyric quote, translate it
-        if (currentLyricQuote.isNotEmpty() && currentLyricText != "♪ Welcome to The Lyricist Keyboard ♪") {
-            originalLyricRunnerText = currentLyricText
-            isRefining = true
+        // Update display
+        updateClipboardDisplay()
+    }
+    
+    private fun updateClipboardDisplay() {
+        mainHandler.post {
+            suggestionContainer.removeAllViews()
             
-            serviceScope.launch {
-                try {
-                    val thaiTranslation = withContext(Dispatchers.IO) {
-                        val prompt = "Translate this English lyric to Thai with poetic expression. Output ONLY the Thai translation, no explanations."
-                        fetchGeminiResponse(prompt)
-                    }
-                    
-                    withContext(Dispatchers.Main) {
-                        if (thaiTranslation.isNotEmpty()) {
-                            lyricRunnerText.text = thaiTranslation
-                            isLyricRunnerTranslated = true
-                            showToast("Lyric translated to Thai")
-                        } else {
-                            showToast("Failed to translate lyric")
+            if (clipboardHistory.isEmpty()) {
+                // Show empty state with gradient background
+                lyricRunnerText.text = "Clipboard empty - copy some text!"
+                lyricRunnerText.visibility = View.VISIBLE
+                suggestionContainer.addView(lyricRunnerText)
+            } else {
+                // Show clipboard items
+                for (item in clipboardHistory) {
+                    val textView = TextView(this@KeyFlowIME).apply {
+                        text = if (item.length > 30) item.take(27) + "..." else item
+                        setTextColor(resources.getColor(android.R.color.white, null))
+                        textSize = 14f
+                        setPadding(16, 8, 16, 8)
+                        setOnClickListener {
+                            pasteClipboardItem(item)
                         }
-                        isRefining = false
+                        setBackgroundResource(R.drawable.clipboard_item_background)
                     }
-                } catch (e: Exception) {
-                    Log.e("GEMINI_ERROR", "Error translating lyric: ", e)
-                    withContext(Dispatchers.Main) {
-                        showToast("Translation error: ${e.message}")
-                        isRefining = false
-                    }
+                    suggestionContainer.addView(textView)
                 }
-            }
-        } else if (currentMusicUrl.isNotEmpty()) {
-            // Original behavior: open YouTube search
-            try {
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(currentMusicUrl))
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                startActivity(intent)
-            } catch (e: Exception) {
-                showToast("Could not open YouTube search")
+                lyricRunnerText.visibility = View.GONE
             }
         }
     }
     
-    private fun showMusicLinkDialog() {
-        if (currentMusicUrl.isNotEmpty()) {
-            AlertDialog.Builder(this)
-                .setTitle("Listen to Music")
-                .setMessage("Would you like to listen to this song?")
-                .setPositiveButton("Listen") { _, _ ->
-                    try {
-                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(currentMusicUrl))
-                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        startActivity(intent)
-                    } catch (e: Exception) {
-                        showToast("Could not open music app")
-                    }
-                }
-                .setNegativeButton("Cancel", null)
-                .show()
-        }
+    private fun pasteClipboardItem(text: String) {
+        appendToInternalInput(text)
+        showToast("Pasted: ${text.take(20)}${if (text.length > 20) "..." else ""}")
     }
     
-    private fun getCurrentSentence(ic: android.view.inputmethod.InputConnection): String {
-        val cursorPos = ic.getTextBeforeCursor(100, 0)?.toString() ?: ""
-        val afterCursor = ic.getTextAfterCursor(100, 0)?.toString() ?: ""
-        val fullContext = cursorPos + afterCursor
-        
-        val sentences = fullContext.split("[.!?]".toRegex())
-        val currentSentence = sentences.find { it.contains(cursorPos) } ?: fullContext.take(50)
-        return currentSentence.trim()
-    }
+
     
-    private suspend fun refineTextWithAI(text: String): String {
-        return withContext(Dispatchers.IO) {
-            try {
-                val prompt = """
-                    Please refine and improve the following text. Make it more professional, clear, and grammatically correct. 
-                    If the text is in Thai, improve the Thai. If in English, improve the English.
-                    Only return the refined text without any explanation.
-                    
-                    Original text: $text
-                """.trimIndent()
-                
-                return@withContext fetchGeminiResponse(prompt)
-            } catch (e: Exception) {
-                throw Exception("AI processing failed: ${e.message}")
-            }
-        }
-    }
-    
-    private suspend fun fetchLyricQuoteFromGemini(userEmotion: String): String {
-        return withContext(Dispatchers.IO) {
-            try {
-                val prompt = """
-                    Based on the following text/emotion, return an English song lyric quote that matches the feeling.
-                    Format: "Quote - Artist"
-                    Keep it concise and meaningful.
-                    
-                    Text/Emotion: $userEmotion
-                """.trimIndent()
-                
-                return@withContext fetchGeminiResponse(prompt)
-            } catch (e: Exception) {
-                throw Exception("Failed to fetch lyric: ${e.message}")
-            }
-        }
-    }
-    
-    private suspend fun translateLyricToThai(englishLyric: String): String {
-        return withContext(Dispatchers.IO) {
-            try {
-                val prompt = """
-                    Translate the following English lyric to Thai with poetic and artistic expression.
-                    Keep the meaning and emotion intact.
-                    Return only the Thai translation without any explanation.
-                    
-                    English lyric: $englishLyric
-                """.trimIndent()
-                
-                val result = fetchGeminiResponse(prompt)
-                return@withContext if (result.isNotEmpty()) result else englishLyric
-            } catch (e: Exception) {
-                throw Exception("Translation failed: ${e.message}")
-            }
-        }
-    }
-    
-    // API Key - easily replaceable
-    private val GEMINI_API_KEY = "AIzaSyBJ7Hon6CNFixnNgUqJRZFUoCBVas_WRmc"
-    
-    // Manual OkHttp implementation for Gemini API
-    private suspend fun fetchGeminiResponse(prompt: String): String {
-        return withContext(Dispatchers.IO) {
-            try {
-                val apiKey = GEMINI_API_KEY
-                val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey"
-                
-                // Create JSON body
-                val jsonBody = JSONObject().apply {
-                    put("contents", JSONArray().apply {
-                        put(JSONObject().apply {
-                            put("parts", JSONArray().apply {
-                                put(JSONObject().apply {
-                                    put("text", prompt)
-                                })
-                            })
-                        })
-                    })
-                }
-                
-                // Create OkHttp client
-                val client = OkHttpClient.Builder()
-                    .connectTimeout(30, TimeUnit.SECONDS)
-                    .readTimeout(30, TimeUnit.SECONDS)
-                    .writeTimeout(30, TimeUnit.SECONDS)
-                    .build()
-                
-                // Create request
-                val mediaType = "application/json; charset=utf-8".toMediaType()
-                val requestBody = jsonBody.toString().toRequestBody(mediaType)
-                
-                val request = Request.Builder()
-                    .url(url)
-                    .post(requestBody)
-                    .addHeader("Content-Type", "application/json")
-                    .build()
-                
-                Log.d("GEMINI_API", "Making manual OkHttp call to: $url")
-                
-                // Execute request
-                client.newCall(request).execute().use { response ->
-                    val responseBody = response.body?.string() ?: ""
-                    
-                    if (!response.isSuccessful) {
-                        Log.e("GEMINI_ERROR", "HTTP Error: ${response.code} - $responseBody")
-                        
-                        // Handle quota exceeded (429) error specifically
-                        if (response.code == 429) {
-                            withContext(Dispatchers.Main) {
-                                showToast("Quota full, please try again in 30s")
-                            }
-                            throw Exception("Quota exceeded")
-                        }
-                        
-                        // Try to parse error message from JSON
-                        val errorMessage = try {
-                            val errorJson = JSONObject(responseBody)
-                            errorJson.getJSONObject("error")
-                                .getString("message")
-                        } catch (e: JSONException) {
-                            "HTTP ${response.code}: ${response.message}"
-                        }
-                        
-                        throw Exception("API Error ($response.code): $errorMessage")
-                    }
-                    
-                    // Parse successful response
-                    try {
-                        val responseJson = JSONObject(responseBody)
-                        val candidates = responseJson.getJSONArray("candidates")
-                        if (candidates.length() > 0) {
-                            val firstCandidate = candidates.getJSONObject(0)
-                            val content = firstCandidate.getJSONObject("content")
-                            val parts = content.getJSONArray("parts")
-                            if (parts.length() > 0) {
-                                val firstPart = parts.getJSONObject(0)
-                                val result = firstPart.getString("text").trim()
-                                
-                                // Update UI on main thread
-                                withContext(Dispatchers.Main) {
-                                    Log.d("GEMINI_API", "Manual OkHttp response: $result")
-                                }
-                                
-                                return@withContext result
-                            }
-                        }
-                        throw Exception("No content in response")
-                    } catch (e: JSONException) {
-                        Log.e("GEMINI_ERROR", "JSON parsing error: ", e)
-                        throw Exception("Failed to parse response: ${e.message}")
-                    }
-                }
-            } catch (e: IOException) {
-                Log.e("GEMINI_ERROR", "Network error: ", e)
-                throw Exception("Network error: ${e.message}")
-            } catch (e: Exception) {
-                Log.e("GEMINI_ERROR", "Error in manual API call: ", e)
-                withContext(Dispatchers.Main) {
-                    Log.e("GEMINI_ERROR", "Main thread error: ${e.message}")
-                }
-                throw Exception("API call failed: ${e.message}")
-            }
-        }
-    }
-    
-    private suspend fun callGeminiRefine(text: String): String {
-        return withContext(Dispatchers.IO) {
-            try {
-                val prompt = "Rewrite this Thai text to be very professional/polite or translate to English if appropriate: $text"
-                return@withContext fetchGeminiResponse(prompt)
-            } catch (e: Exception) {
-                throw Exception("AI processing failed: ${e.message}")
-            }
-        }
-    }
-    
-    private suspend fun callGeminiLyric(text: String): String {
-        return withContext(Dispatchers.IO) {
-            try {
-                val prompt = "Based on this emotion $text, suggest one English song lyric quote with artist name. Return only the quote and artist."
-                return@withContext fetchGeminiResponse(prompt)
-            } catch (e: Exception) {
-                throw Exception("Failed to fetch lyric: ${e.message}")
-            }
-        }
-    }
 
     private fun setLoadingState(isLoading: Boolean) {
         mainHandler.post {
@@ -967,8 +547,8 @@ class KeyFlowIME : InputMethodService() {
         // Reset translation states
         isInternalTextTranslated = false
         originalInternalText = ""
-        isLyricRunnerTranslated = false
-        originalLyricRunnerText = ""
+        // Clear clipboard listener
+        clipboardManager.removePrimaryClipChangedListener(null)
     }
 
     override fun onDestroy() {
@@ -977,6 +557,8 @@ class KeyFlowIME : InputMethodService() {
         stopDeleteRepeat()
         musicPopupWindow?.dismiss()
         keyPreviewPopup?.dismiss()
+        // Clear clipboard listener
+        clipboardManager.removePrimaryClipChangedListener(null)
     }
 
     private fun startDeleteRepeat() {
