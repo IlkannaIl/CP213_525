@@ -3,7 +3,8 @@
     android:layout_width="match_parent"
     android:layout_height="300dp"
     android:orientation="vertical"
-    android:background="#3E2723"> <!-- Deep Brown Keyboard Background -->
+    android:background="#3E2723"
+    android:visibility="visible"> <!-- Deep Brown Keyboard Background -->
 
     <!-- Smart Draft Bar -->
     <LinearLayout
@@ -34,63 +35,57 @@
             android:paddingVertical="4dp"
             android:scrollHorizontally="false" />
             
-        <Button
-            android:id="@+id/btn_send_to_app"
-            android:layout_width="wrap_content"
-            android:layout_height="32dp"
-            android:text="SEND"
-            android:textColor="#FFFFFF"
-            android:textSize="12sp"
-            android:textStyle="bold"
-            android:backgroundTint="#4CAF50"
-            android:paddingHorizontal="12dp"
-            android:layout_marginStart="8dp"
-            android:visibility="gone" />
-            
     </LinearLayout>
 
-    <!-- 1. Top Bar (Toolbar) -->
-    <RelativeLayout
+    <!-- 1. Top Bar (Toolbar) - Linear Horizontal -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="48dp"
-        android:paddingHorizontal="16dp">
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="16dp"
+        android:visibility="visible">
 
-        <LinearLayout
+        <!-- Left Side: Music Mode Button -->
+        <Button
             android:id="@+id/btn_music_mode"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_centerVertical="true"
-            android:background="@drawable/bg_music_mode_rounded"
-            android:padding="6dp">
-            <ImageView 
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:src="@drawable/ic_alert"
-                android:layout_gravity="center_vertical"
-                android:contentDescription="Music mode icon" />
-            <TextView 
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Music Mode"
-                android:textColor="#FFFFFF"
-                android:textSize="12sp"
-                android:layout_gravity="center_vertical"
-                android:layout_marginStart="4dp" />
-        </LinearLayout>
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="🎵"
+            android:textSize="20sp"
+            android:textColor="#FAF0E6"
+            android:background="@drawable/bg_icon_button_transparent"
+            android:contentDescription="Music mode" />
 
+        <!-- Middle: Spacer to push buttons to the right -->
+        <View
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <!-- Right Side: Refine and Send Buttons -->
         <Button
             android:id="@+id/btn_refine"
-            android:layout_width="wrap_content"
-            android:layout_height="36dp"
-            android:layout_alignParentEnd="true"
-            android:layout_centerVertical="true"
-            android:text="Refine AI"
-            android:textColor="#FFFFFF"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:paddingHorizontal="16dp"
-            android:background="@drawable/bg_refine_rounded" />
-    </RelativeLayout>
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="✨"
+            android:textSize="20sp"
+            android:textColor="#FAF0E6"
+            android:background="@drawable/bg_icon_button_transparent"
+            android:contentDescription="Refine AI"
+            android:layout_marginEnd="8dp" />
+            
+        <Button
+            android:id="@+id/btn_send_to_app"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:text="✈️"
+            android:textSize="20sp"
+            android:textColor="#FAF0E6"
+            android:background="@drawable/bg_icon_button_transparent"
+            android:contentDescription="Send to app" />
+                
+    </LinearLayout>
 
     <!-- 2. Suggestion Strip (Clipboard Bar) -->
     <HorizontalScrollView
@@ -131,6 +126,7 @@
         android:id="@+id/keyboard_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="24dp" />
+        android:layout_marginBottom="24dp"
+        android:visibility="visible" />
 
 </LinearLayout>
