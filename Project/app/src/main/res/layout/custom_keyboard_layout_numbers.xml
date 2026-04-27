@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="264dp"
     android:orientation="vertical"
     xmlns:tools="http://schemas.android.com/tools"
     tools:ignore="HardcodedText"
@@ -11,7 +11,8 @@
     <!-- First Row - Numbers -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:orientation="horizontal"
         android:weightSum="10">
         
@@ -30,7 +31,8 @@
     <!-- Second Row - Symbols -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:orientation="horizontal"
         android:weightSum="10">
         
@@ -51,7 +53,8 @@
     <!-- Fourth Row - Special Keys -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:orientation="horizontal"
         android:weightSum="11">
 
@@ -70,13 +73,14 @@
     <!-- Fifth Row - Thai Switch and Delete -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         android:orientation="horizontal"
         android:weightSum="11">
         
         <Button android:id="@+id/btn_thai" android:text="กขค" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="2" android:contentDescription="Thai layout"/>
         <Button android:id="@+id/btn_4_2" android:text="," style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="1" android:contentDescription="Comma"/>
-        <Button android:id="@+id/btn_SPACE" android:text="SPACE" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="5" android:contentDescription="Space bar"/>
+        <Button android:id="@+id/btn_SPACE" android:text="ไทย" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="5" android:contentDescription="Space bar"/>
         <Button android:id="@+id/btn_4_4" android:text="." style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="1" android:contentDescription="Period"/>
         <Button android:id="@+id/btn_ENTER" android:text="↵" style="@style/KeyButton" android:layout_width="0dp" android:layout_weight="2" android:contentDescription="Enter key"/>
 
