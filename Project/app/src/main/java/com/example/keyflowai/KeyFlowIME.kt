@@ -465,7 +465,7 @@ class KeyFlowIME : InputMethodService() {
                 for (item in clipboardHistory) {
                     val textView = TextView(this@KeyFlowIME).apply {
                         text = if (item.length > 30) item.take(27) + "..." else item
-                        setTextColor(resources.getColor(android.R.color.white, null))
+                        setTextColor(resources.getColor(R.color.dark_grey_green, null))
                         textSize = 14f
                         setPadding(16, 8, 16, 8)
                         setOnClickListener {
