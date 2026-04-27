@@ -8,24 +8,27 @@
     <!-- Smart Draft Bar -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="48dp"
+        android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:paddingHorizontal="16dp"
-        android:background="#1E293B">
+        android:paddingVertical="8dp"
+        android:background="#2B1B17">
         
         <EditText
             android:id="@+id/internal_input_field"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:textColor="#FFFFFF"
+            android:textColor="#FAF0E6"
             android:hint="ร่างข้อความที่นี่..."
-            android:textColorHint="#888888"
+            android:textColorHint="#CCCCCC"
             android:background="@android:color/transparent"
             android:textSize="14sp"
             android:inputType="textMultiLine"
+            android:minLines="1"
             android:maxLines="3"
+            android:scrollbars="vertical"
             android:scrollHorizontally="false" />
             
         <Button
