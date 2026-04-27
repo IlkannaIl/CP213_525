@@ -412,12 +412,12 @@ class KeyFlowIME : InputMethodService() {
             musicPopupWindow?.dismiss()
         }
         
-        // Show popup above the keyboard, centered on screen
+        // Show popup just above keyboard area, centered on screen
         musicPopupWindow?.showAtLocation(
             musicModeButton,
             Gravity.CENTER,
             0, // X offset (centered by Gravity.CENTER)
-            -400 // Negative Y offset to force popup to upper half of screen
+            -200 // Adjusted Y offset to position just above keyboard area
         )
     }
     
