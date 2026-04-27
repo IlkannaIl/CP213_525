@@ -7,10 +7,6 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.EditText
 import android.widget.Toast
-import android.widget.PopupWindow
-import android.widget.LinearLayout
-import android.view.Gravity
-import android.view.LayoutInflater
 import kotlinx.coroutines.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
@@ -28,6 +24,14 @@ import android.util.Log
 import android.content.ClipboardManager
 import android.content.ClipData
 import android.widget.HorizontalScrollView
+import android.widget.LinearLayout
+import java.io.IOException
+import okhttp3.*
+import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
+import org.json.JSONException
+import org.json.JSONArray
 
 
 class KeyFlowIME : InputMethodService() {
@@ -45,12 +49,9 @@ class KeyFlowIME : InputMethodService() {
     private val clipboardHistory = mutableListOf<String>()
     private val maxClipboardItems = 5
     
-    // Internal input toggle state
+    // Internal input toggle state (kept for potential future use)
     private var originalInternalText: String = ""
-    private var isInternalTextTranslated = false
-    
-    // Music popup window
-    private var musicPopupWindow: PopupWindow? = null
+    private var isInternalTextTranslated: Boolean = false
     
     // Keyboard layout states
     enum class LayoutState {
@@ -63,6 +64,11 @@ class KeyFlowIME : InputMethodService() {
     private var currentLayoutState = LayoutState.THAI_NORMAL
     private var lastThaiState = LayoutState.THAI_NORMAL
     
+    // Gemini API configuration
+    private val geminiApiKey = "KEY"
+    private val geminiBaseUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+    private val httpClient = OkHttpClient()
+    
     // Coroutine scope for async operations
     private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var isRefining = false
@@ -74,13 +80,6 @@ class KeyFlowIME : InputMethodService() {
     private var deleteHandler: Handler? = null
     private var deleteRunnable: Runnable? = null
     private var isDeletePressed = false
-    
-    // Key preview disabled to prevent misalignment issues
-    
-    // Trackpad mode handling
-    private var isTrackpadMode = false
-    private var trackpadStartX = 0f
-    private var trackpadInitialCursorPos = 0
 
     override fun onCreateInputView(): View {
         
@@ -360,65 +359,115 @@ class KeyFlowIME : InputMethodService() {
             return
         }
         
-        // Simple toggle between original and refined text (placeholder for future AI integration)
-        if (isInternalTextTranslated && originalInternalText.isNotEmpty()) {
-            // Toggle back to original text
-            internalInputField.setText(originalInternalText)
-            internalInputField.setSelection(originalInternalText.length)
-            isInternalTextTranslated = false
-            showToast("Reverted to original text")
-        } else {
-            // Placeholder for future AI refinement
-            showToast("AI refinement disabled - clipboard mode active")
+        // Use AI translation
+        serviceScope.launch {
+            try {
+                setLoadingState(true)
+                val translatedText = callGeminiAPI(
+                    "Translate this text. If it is Thai, translate to English. If it is English, translate back to the original Thai meaning. Return ONLY the translated text.",
+                    currentText
+                )
+                
+                if (translatedText.isNotEmpty()) {
+                    internalInputField.setText(translatedText)
+                    internalInputField.setSelection(translatedText.length)
+                    showToast("Translation complete")
+                } else {
+                    showToast("Translation failed")
+                }
+            } catch (e: Exception) {
+                Log.e("KeyFlowIME", "Translation error", e)
+                showToast("Translation error: ${e.message}")
+            } finally {
+                setLoadingState(false)
+            }
         }
     }
     
     private fun handleMusicMode() {
-        // Keep music mode functionality intact for demo purposes
-        // Show a simple demo popup
-        showMusicDemoPopup()
+        val currentText = internalInputField.text.toString()
+        if (currentText.isEmpty()) {
+            showToast("Type a musical mood or keyword for YouTube search")
+            return
+        }
+        
+        // Use AI to get YouTube search URL
+        serviceScope.launch {
+            try {
+                setLoadingState(true)
+                val youtubeUrl = callGeminiAPI(
+                    "Translate this musical mood or keyword to English, then provide a YouTube search URL for a matching international song. Return ONLY the URL.",
+                    currentText
+                )
+                
+                if (youtubeUrl.isNotEmpty() && youtubeUrl.startsWith("http")) {
+                    // Open YouTube link directly
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(youtubeUrl))
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    startActivity(intent)
+                    showToast("Opening YouTube...")
+                } else {
+                    showToast("Failed to generate YouTube link")
+                }
+            } catch (e: Exception) {
+                Log.e("KeyFlowIME", "YouTube search error", e)
+                showToast("YouTube search error: ${e.message}")
+            } finally {
+                setLoadingState(false)
+            }
+        }
     }
     
-    private fun showMusicDemoPopup() {
-        // Dismiss any existing popup
-        musicPopupWindow?.dismiss()
-        
-        // Create popup view
-        val popupView = layoutInflater.inflate(R.layout.music_popup_layout, null)
-        musicPopupWindow = PopupWindow(
-            popupView,
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-            true // focusable
-        ).apply {
-            // Set background with rounded corners and shadow
-            setBackgroundDrawable(resources.getDrawable(android.R.drawable.dialog_frame, null))
-            elevation = 12f
+    private suspend fun callGeminiAPI(prompt: String, text: String): String {
+        return withContext(Dispatchers.IO) {
+            try {
+                val jsonPayload = JSONObject().apply {
+                    put("contents", JSONArray().apply {
+                        put(JSONObject().apply {
+                            put("parts", JSONArray().apply {
+                                put(JSONObject().apply {
+                                    put("text", "$prompt\n\nText: $text")
+                                })
+                            })
+                        })
+                    })
+                }
+                
+                val requestBody = jsonPayload.toString().toRequestBody("application/json".toMediaType())
+                
+                val request = Request.Builder()
+                    .url("$geminiBaseUrl?key=$geminiApiKey")
+                    .post(requestBody)
+                    .build()
+                
+                val response = httpClient.newCall(request).execute()
+                val responseBody = response.body?.string()
+                
+                if (response.isSuccessful && !responseBody.isNullOrEmpty()) {
+                    val jsonResponse = JSONObject(responseBody)
+                    val candidates = jsonResponse.getJSONArray("candidates")
+                    if (candidates.length() > 0) {
+                        val candidate = candidates.getJSONObject(0)
+                        val content = candidate.getJSONObject("content")
+                        val parts = content.getJSONArray("parts")
+                        if (parts.length() > 0) {
+                            val part = parts.getJSONObject(0)
+                            return@withContext part.getString("text").trim()
+                        }
+                    }
+                }
+                ""
+            } catch (e: JSONException) {
+                Log.e("KeyFlowIME", "JSON parsing error", e)
+                ""
+            } catch (e: IOException) {
+                Log.e("KeyFlowIME", "Network error", e)
+                ""
+            } catch (e: Exception) {
+                Log.e("KeyFlowIME", "API call error", e)
+                ""
+            }
         }
-        
-        // Setup popup content
-        val lyricTextView = popupView.findViewById<TextView>(R.id.popup_lyric_text)
-        val listenButton = popupView.findViewById<Button>(R.id.popup_listen_button)
-        val closeButton = popupView.findViewById<Button>(R.id.popup_close_button)
-        
-        lyricTextView?.text = "🎵 Music Mode Demo\nClipboard mode is now active!"
-        
-        listenButton?.setOnClickListener {
-            musicPopupWindow?.dismiss()
-            showToast("Music feature preserved for demo")
-        }
-        
-        closeButton?.setOnClickListener {
-            musicPopupWindow?.dismiss()
-        }
-        
-        // Show popup just above keyboard area, centered on screen
-        musicPopupWindow?.showAtLocation(
-            musicModeButton,
-            Gravity.CENTER,
-            0, // X offset (centered by Gravity.CENTER)
-            -200 // Adjusted Y offset to position just above keyboard area
-        )
     }
     
     private fun setupClipboardListener() {
@@ -492,6 +541,7 @@ class KeyFlowIME : InputMethodService() {
         mainHandler.post {
             refineButton.isEnabled = !isLoading
             refineButton.text = if (isLoading) "Refining..." else "Refine AI"
+            musicModeButton.isEnabled = !isLoading
         }
     }
 
@@ -516,8 +566,6 @@ class KeyFlowIME : InputMethodService() {
         super.onDestroy()
         serviceScope.cancel()
         stopDeleteRepeat()
-        musicPopupWindow?.dismiss()
-        // Key preview disabled - no popup to dismiss
         // Clear clipboard listener
         clipboardManager.removePrimaryClipChangedListener(null)
     }
@@ -532,11 +580,11 @@ class KeyFlowIME : InputMethodService() {
                 }
             }
         }
-        deleteHandler?.postDelayed(deleteRunnable!!, 500) // Start repeat after 500ms
+        deleteHandler?.postDelayed(deleteRunnable ?: return, 500) // Start repeat after 500ms
     }
 
     private fun stopDeleteRepeat() {
-        deleteHandler?.removeCallbacks(deleteRunnable!!)
+        deleteHandler?.removeCallbacks(deleteRunnable ?: return)
         deleteHandler = null
         deleteRunnable = null
     }
