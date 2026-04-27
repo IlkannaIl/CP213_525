@@ -245,60 +245,13 @@ class KeyFlowIME : InputMethodService() {
         // Delete button
         view.findViewById<Button>(R.id.btn_DEL)?.let { setupDeleteButton(it) }
         
-        // Space button with trackpad mode
-        view.findViewById<Button>(R.id.btn_SPACE)?.setOnTouchListener { _, event ->
-            when (event.action) {
-                MotionEvent.ACTION_DOWN -> {
-                    trackpadStartX = event.rawX
-                    trackpadInitialCursorPos = internalInputField.selectionStart
-                    isTrackpadMode = true
-                    keyPreviewHandler = Handler(Looper.getMainLooper())
-                    keyPreviewRunnable = object : Runnable {
-                        override fun run() {
-                            if (isTrackpadMode) {
-                                keyPreviewHandler?.postDelayed(this, 100)
-                            }
-                        }
-                    }
-                    keyPreviewHandler?.postDelayed(keyPreviewRunnable!!, 500) // Start trackpad after 500ms
-                    true
-                }
-                MotionEvent.ACTION_MOVE -> {
-                    if (isTrackpadMode) {
-                        val deltaX = event.rawX - trackpadStartX
-                        val moveThreshold = 30f
-                        
-                        if (kotlin.math.abs(deltaX) > moveThreshold) {
-                            val currentText = internalInputField.text.toString()
-                            val maxPos = currentText.length
-                            
-                            // Move cursor based on swipe direction
-                            val newPos = when {
-                                deltaX > 0 -> (trackpadInitialCursorPos + 1).coerceAtMost(maxPos)
-                                deltaX < 0 -> (trackpadInitialCursorPos - 1).coerceAtLeast(0)
-                                else -> trackpadInitialCursorPos
-                            }
-                            
-                            internalInputField.setSelection(newPos)
-                            trackpadInitialCursorPos = newPos
-                            trackpadStartX = event.rawX
-                        }
-                    }
-                    true
-                }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    if (isTrackpadMode) {
-                        isTrackpadMode = false
-                        keyPreviewHandler?.removeCallbacks(keyPreviewRunnable!!)
-                        // If it was a short press (less than 500ms), insert space
-                        if (System.currentTimeMillis() - event.downTime < 500) {
-                            appendToInternalInput(" ")
-                        }
-                    }
-                    true
-                }
-                else -> false
-            }
+        // Space button - simple click for single space
+        view.findViewById<Button>(R.id.btn_SPACE)?.setOnClickListener {
+            appendToInternalInput(" ")
+            
+            // Optional: If using Mirror Input, also commit to external app
+            val ic = currentInputConnection
+            ic?.commitText(" ", 1)
         }
         
         // Enter button
@@ -696,9 +649,9 @@ class KeyFlowIME : InputMethodService() {
         // Show popup above the keyboard, centered on screen
         musicPopupWindow?.showAtLocation(
             musicModeButton,
-            Gravity.TOP or Gravity.CENTER_HORIZONTAL,
-            0, // X offset (centered by Gravity.CENTER_HORIZONTAL)
-            100 // Y offset from top to avoid overlapping with status bar
+            Gravity.CENTER,
+            0, // X offset (centered by Gravity.CENTER)
+            -400 // Negative Y offset to force popup to upper half of screen
         )
         
         // No auto-dismiss - popup stays visible until user interaction
@@ -841,11 +794,14 @@ class KeyFlowIME : InputMethodService() {
         }
     }
     
+    // API Key - easily replaceable
+    private val GEMINI_API_KEY = "AIzaSyBJ7Hon6CNFixnNgUqJRZFUoCBVas_WRmc"
+    
     // Manual OkHttp implementation for Gemini API
     private suspend fun fetchGeminiResponse(prompt: String): String {
         return withContext(Dispatchers.IO) {
             try {
-                val apiKey = "AIzaSyBJ7Hon6CNFixnNgUqJRZFUoCBVas_WRmc"
+                val apiKey = GEMINI_API_KEY
                 val url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=$apiKey"
                 
                 // Create JSON body
@@ -886,6 +842,14 @@ class KeyFlowIME : InputMethodService() {
                     
                     if (!response.isSuccessful) {
                         Log.e("GEMINI_ERROR", "HTTP Error: ${response.code} - $responseBody")
+                        
+                        // Handle quota exceeded (429) error specifically
+                        if (response.code == 429) {
+                            withContext(Dispatchers.Main) {
+                                showToast("Quota full, please try again in 30s")
+                            }
+                            throw Exception("Quota exceeded")
+                        }
                         
                         // Try to parse error message from JSON
                         val errorMessage = try {
