@@ -540,7 +540,13 @@ class KeyFlowIME : InputMethodService() {
     private fun setLoadingState(isLoading: Boolean) {
         mainHandler.post {
             refineButton.isEnabled = !isLoading
-            refineButton.text = if (isLoading) "Refining..." else "Refine AI"
+            if (isLoading) {
+                refineButton.text = "Refining..."
+                refineButton.setCompoundDrawablesWithIntrinsicBounds(null, null, null, null)
+            } else {
+                refineButton.text = ""
+                refineButton.setCompoundDrawablesWithIntrinsicBounds(resources.getDrawable(R.drawable.ic_sparkles, null), null, null, null)
+            }
             musicModeButton.isEnabled = !isLoading
         }
     }

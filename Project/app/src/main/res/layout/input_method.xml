@@ -51,9 +51,9 @@
             android:id="@+id/btn_music_mode"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:text="🎵"
-            android:textSize="20sp"
-            android:textColor="#4A7C59"
+            android:drawableStart="@drawable/ic_music_note"
+            android:drawablePadding="0dp"
+            android:padding="0dp"
             android:background="@drawable/bg_icon_button_transparent"
             android:contentDescription="Music mode" />
 
@@ -66,11 +66,11 @@
         <!-- Right Side: Refine and Send Buttons -->
         <Button
             android:id="@+id/btn_refine"
-            android:layout_width="40dp"
+            android:layout_width="wrap_content"
             android:layout_height="40dp"
-            android:text="✨"
-            android:textSize="20sp"
-            android:textColor="#4A7C59"
+            android:drawableStart="@drawable/ic_sparkles"
+            android:drawablePadding="8dp"
+            android:paddingHorizontal="8dp"
             android:background="@drawable/bg_icon_button_transparent"
             android:contentDescription="Refine AI"
             android:layout_marginEnd="8dp" />
@@ -79,9 +79,9 @@
             android:id="@+id/btn_send_to_app"
             android:layout_width="40dp"
             android:layout_height="40dp"
-            android:text="✈️"
-            android:textSize="20sp"
-            android:textColor="#4A7C59"
+            android:drawableStart="@drawable/ic_send"
+            android:drawablePadding="0dp"
+            android:padding="0dp"
             android:background="@drawable/bg_icon_button_transparent"
             android:contentDescription="Send to app" />
                 
