@@ -65,7 +65,7 @@ class KeyFlowIME : InputMethodService() {
     private var lastThaiState = LayoutState.THAI_NORMAL
     
     // Gemini API configuration
-    private val geminiApiKey = "AIzaSyAobbTDUgZEX3PrOoMHHOqe1bGEsbnzMHg"
+    private val geminiApiKey = "KEY"
     private val geminiBaseUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
     private val httpClient = OkHttpClient()
     
@@ -396,8 +396,8 @@ class KeyFlowIME : InputMethodService() {
             try {
                 setLoadingState(true)
                 val youtubeUrl = callGeminiAPI(
-                    "Translate this musical mood or keyword to English, then provide a YouTube search URL for a matching international song. Return ONLY the URL.",
-                    currentText
+                    "You are a music expert. Step 1: Check the input language. If it's not English, translate it to an English musical mood or genre.Step 2: Based on that mood, pick ONE specific famous international song.Step 3: Return ONLY a YouTube search URL for that song in this format: https://www.youtube.com/results?search_query=artist+song+name. Constraint: Return ONLY the URL string. No explanation. No quotes."
+                    ,currentText
                 )
                 
                 if (youtubeUrl.isNotEmpty() && youtubeUrl.startsWith("http")) {
