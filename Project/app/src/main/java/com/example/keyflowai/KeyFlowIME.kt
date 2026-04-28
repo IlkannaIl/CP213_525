@@ -65,8 +65,8 @@ class KeyFlowIME : InputMethodService() {
     private var lastThaiState = LayoutState.THAI_NORMAL
     
     // Gemini API configuration
-    private val geminiApiKey = "KEY"
-    private val geminiBaseUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+    private val geminiApiKey = "AIzaSyAobbTDUgZEX3PrOoMHHOqe1bGEsbnzMHg"
+    private val geminiBaseUrl = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
     private val httpClient = OkHttpClient()
     
     // Coroutine scope for async operations
